@@ -31,7 +31,11 @@ layout (std430, binding = 4) buffer VOXMINS {
 
 
 uint octreeSize = 32u;
-const vec3 chunkPosition = vec3(0,0,0);
+
+layout(binding = 5) uniform UniformBufferObject {
+    vec3 chunkPosition;
+};
+
 
 const vec3 CHILD_MIN_OFFSETS[8] = vec3[]
 (
@@ -189,8 +193,8 @@ float getDensity(vec3 worldPosition) {
 
     // float world = min(box, sphere);
     // return max(world, -Sphere(worldPosition, vec3(7.0, 7.0, 12.0), 2.0));
-	float worldRadius = 8.0f;
-	vec3 world = worldPosition - vec3(16.0, 16.0, 16.0);
+float worldRadius = 50.0f;
+	vec3 world = worldPosition - vec3(70.0, 70.0, 70.0);
 	float worldDist = -worldRadius + length(world);
 
 	float flatlandNoiseScale = 3.0f;
@@ -222,10 +226,7 @@ float getDensity(vec3 worldPosition) {
 	blob = CLerp(blob, (worldDist) * (flatlandYPercent + ((rockyYPercent - flatlandYPercent) * rockyBlend)),
 				flatlandLerpAmount + ((rockyLerpAmount - flatlandLerpAmount) * rockyBlend));
 	
-	
-	
 	float result = ((worldDist) / worldRadius) + CLerp(mountain, blob, minMountainMixLerpAmount + ((maxMountainMixLerpAmount - minMountainMixLerpAmount) * mountainBlend));
-	
 	float floor = max(-Box(worldPosition, vec3(5.0, 5.0, 5.0), vec3(3.0, 3.0, 3.0)), worldPosition.y - 4.0);
 	return max(-Sphere(worldPosition, vec3(20.0, 48.0, 48.0), 10.0), min(result, Box(worldPosition, vec3(10.0, 10.0, 10.0), vec3(3.0, 3.0, 3.0))));
 }

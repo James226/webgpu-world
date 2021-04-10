@@ -1,6 +1,4 @@
-import VertexShader from './vertex.glsl';
-import FragmentShader from './fragment.glsl';
-import { mat4, vec3 } from 'gl-matrix';
+import { vec3 } from 'gl-matrix';
 import ComputeShader from './compute-materials.glsl';
 import ComputeCorners from './compute-corners.glsl';
 import ComputePositions from './compute-positions.glsl';
@@ -9,154 +7,76 @@ import Random from 'seedrandom';
 import ContourCells from './contouring';
 import ConstructOctree from './octree';
 
+const generateVertexIndices = (node, vertices, normals, nodeSize) => {
+  if (node == null)
+    return;
 
-const swapChainFormat = 'bgra8unorm';
+  if (node.size > nodeSize) {
+    if (node.type != 'leaf') {
+      for (let i = 0; i < 8; i++) {
+        generateVertexIndices(node.children[i], vertices, normals, nodeSize);
+      }
+    }
+  }
+
+  if (node.type != 'internal') {
+    const d = node.drawInfo;
+    if (d == null) {
+      throw "Error! Could not add vertex!";
+    }
+
+    d.index = vertices.length / 3;
+    vertices.push(d.position[0], d.position[1], d.position[2]);
+    normals.push(d.averageNormal[0], d.averageNormal[1], d.averageNormal[2]);
+  }
+}
+
+const computeVoxels = (position, voxelCount, computedVoxelsData) => {
+  const computedVoxels = [];
+
+  if (voxelCount == 0) {
+    return { vertices: [], normals: [], indices: [] };
+  }
+
+  for (let i = 0; i < voxelCount * 12; i += 12) {
+    if (computedVoxelsData[i + 11] != 0) {
+      const leaf = {
+        type: 'leaf',
+        size: 1,
+        min: vec3.fromValues(computedVoxelsData[i], computedVoxelsData[i + 1], computedVoxelsData[i + 2]),
+        drawInfo: {
+          position: vec3.fromValues(computedVoxelsData[i + 4], computedVoxelsData[i + 5], computedVoxelsData[i + 6]),
+          averageNormal: vec3.fromValues(computedVoxelsData[i + 8], computedVoxelsData[i + 9], computedVoxelsData[i + 10]),
+          corners: computedVoxelsData[i + 3]
+        }
+      };
+      computedVoxels.push(leaf);
+    }
+  }
+
+  const tree = ConstructOctree(computedVoxels, position, 32);
+
+
+  const vertices = [];
+  const normals = [];
+
+  generateVertexIndices(tree, vertices, normals, 1);
+
+  const indices = [];
+  ContourCells(tree, indices);
+
+  return {
+    vertices: new Float32Array(vertices),
+    normals: new Float32Array(normals),
+    indices: new Uint16Array(indices)
+  };
+}
 
 
 export default class Voxel {
 
   init(device, queue, glslang) {
-    this.pipeline = device.createRenderPipeline({
-      vertex: {
-        module:
-          device.createShaderModule({
-            code: glslang.compileGLSL(VertexShader, 'vertex'),
-          }),
-        buffers: [
-          {
-            arrayStride: 4 * 10,
-            attributes: [
-              {
-                // position
-                shaderLocation: 0,
-                offset: 0,
-                format: 'float32x4',
-              },
-              {
-                // color
-                shaderLocation: 1,
-                offset: 4 * 4,
-                format: 'float32x4',
-              },
-            ],
-          },
-        ],
-        entryPoint: 'main',
-      },
-      fragment: {
-        module:
-          device.createShaderModule({
-            code: glslang.compileGLSL(FragmentShader, 'fragment')
-          }),
-        entryPoint: 'main',
-        targets: [
-          {
-            format: swapChainFormat,
-          },
-        ]
-      },
-
-      primitive: {
-        topology: 'triangle-list',
-        cullMode: 'back',
-      }
-    });
-
-    const cubeVertexArray = new Float32Array([
-      1, -1, 1, 1, 1, 0, 1, 1, 1, 1,
-      -1, -1, 1, 1, 0, 0, 1, 1, 0, 1,
-      -1, -1, -1, 1, 0, 0, 0, 1, 0, 0,
-      1, -1, -1, 1, 1, 0, 0, 1, 1, 0,
-      1, -1, 1, 1, 1, 0, 1, 1, 1, 1,
-      -1, -1, -1, 1, 0, 0, 0, 1, 0, 0,
-
-      1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-      1, -1, 1, 1, 1, 0, 1, 1, 0, 1,
-      1, -1, -1, 1, 1, 0, 0, 1, 0, 0,
-      1, 1, -1, 1, 1, 1, 0, 1, 1, 0,
-      1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-      1, -1, -1, 1, 1, 0, 0, 1, 0, 0,
-
-      -1, 1, 1, 1, 0, 1, 1, 1, 1, 1,
-      1, 1, 1, 1, 1, 1, 1, 1, 0, 1,
-      1, 1, -1, 1, 1, 1, 0, 1, 0, 0,
-      -1, 1, -1, 1, 0, 1, 0, 1, 1, 0,
-      -1, 1, 1, 1, 0, 1, 1, 1, 1, 1,
-      1, 1, -1, 1, 1, 1, 0, 1, 0, 0,
-
-      -1, -1, 1, 1, 0, 0, 1, 1, 1, 1,
-      -1, 1, 1, 1, 0, 1, 1, 1, 0, 1,
-      -1, 1, -1, 1, 0, 1, 0, 1, 0, 0,
-      -1, -1, -1, 1, 0, 0, 0, 1, 1, 0,
-      -1, -1, 1, 1, 0, 0, 1, 1, 1, 1,
-      -1, 1, -1, 1, 0, 1, 0, 1, 0, 0,
-
-      1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-      -1, 1, 1, 1, 0, 1, 1, 1, 0, 1,
-      -1, -1, 1, 1, 0, 0, 1, 1, 0, 0,
-      -1, -1, 1, 1, 0, 0, 1, 1, 0, 0,
-      1, -1, 1, 1, 1, 0, 1, 1, 1, 0,
-      1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-
-      1, -1, -1, 1, 1, 0, 0, 1, 1, 1,
-      -1, -1, -1, 1, 0, 0, 0, 1, 0, 1,
-      -1, 1, -1, 1, 0, 1, 0, 1, 0, 0,
-      1, 1, -1, 1, 1, 1, 0, 1, 1, 0,
-      1, -1, -1, 1, 1, 0, 0, 1, 1, 1,
-      -1, 1, -1, 1, 0, 1, 0, 1, 0, 0,
-    ]);
-
-    this.vertexBuffer = device.createBuffer({
-      size: cubeVertexArray.byteLength,
-      usage: GPUBufferUsage.VERTEX,
-      mappedAtCreation: true,
-    });
-    new Float32Array(this.vertexBuffer.getMappedRange()).set(cubeVertexArray);
-    this.vertexBuffer.unmap();
-
-    this.indexCount = 12 * 3;
-    this.indexBuffer = device.createBuffer({
-      size: this.indexCount * Uint16Array.BYTES_PER_ELEMENT,
-      usage: GPUBufferUsage.INDEX,
-      mappedAtCreation: true,
-    });
-    {
-      const mapping = new Uint16Array(this.indexBuffer.getMappedRange());
-      mapping.set([
-        1, 2, 3,
-        6, 5, 4,
-        7, 8, 9,
-        12, 11, 11,
-        13, 14, 15,
-        16, 17, 18,
-        22, 23, 24,
-        25, 26, 27,
-        28, 29, 30,
-        31, 32, 33,
-      ]);
-      this.indexBuffer.unmap();
-    }
-
-    const uniformBufferSize = 4 * 16; // 4x4 matrix
-
-    this.uniformBuffer = device.createBuffer({
-      size: uniformBufferSize,
-      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-    });
-
-    this.uniformBindGroup = device.createBindGroup({
-      layout: this.pipeline.getBindGroupLayout(0),
-      entries: [
-        {
-          binding: 0,
-          resource: {
-            buffer: this.uniformBuffer,
-          },
-        },
-      ],
-    });
-
-    const computePipeline = device.createComputePipeline({
+    this.computePipeline = device.createComputePipeline({
       computeStage: {
         module: device.createShaderModule({
           code: glslang.compileGLSL(ComputeShader, 'compute'),
@@ -165,13 +85,19 @@ export default class Voxel {
       },
     });
 
-    const computeCornersPipeline = device.createComputePipeline({
+    this.computeCornersPipeline = device.createComputePipeline({
       computeStage: {
         module: device.createShaderModule({
           code: glslang.compileGLSL(ComputeCorners, 'compute'),
         }),
         entryPoint: 'main',
       },
+    });
+
+    const uniformBufferSize = 4 * 3;
+    this.uniformBuffer = device.createBuffer({
+      size: uniformBufferSize,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
 
     const particleBuffers = device.createBuffer({
@@ -186,13 +112,13 @@ export default class Voxel {
       mappedAtCreation: false,
     });
 
-    const cornerIndexBuffer = device.createBuffer({
+    this.cornerIndexBuffer = device.createBuffer({
       size: Uint32Array.BYTES_PER_ELEMENT + Uint32Array.BYTES_PER_ELEMENT * 32 * 32 * 32,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
       mappedAtCreation: false,
     });
 
-    const gpuReadBuffer = device.createBuffer({
+    this.gpuReadBuffer = device.createBuffer({
       size: Uint32Array.BYTES_PER_ELEMENT,
       usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
@@ -206,24 +132,24 @@ export default class Voxel {
     for (let i = 256; i < 512; i++)
       permutations[i] = permutations[i - 256];
 
-    const permutationsBuffer = device.createBuffer({
+    this.permutationsBuffer = device.createBuffer({
       size: permutations.byteLength,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
       mappedAtCreation: true,
     });
 
-    new Int32Array(permutationsBuffer.getMappedRange()).set(
+    new Int32Array(this.permutationsBuffer.getMappedRange()).set(
       permutations
     );
-    permutationsBuffer.unmap();
+    this.permutationsBuffer.unmap();
 
-    const computeBindGroup = device.createBindGroup({
-      layout: computePipeline.getBindGroupLayout(0),
+    this.computeBindGroup = device.createBindGroup({
+      layout: this.computePipeline.getBindGroupLayout(0),
       entries: [
         {
           binding: 0,
           resource: {
-            buffer: permutationsBuffer
+            buffer: this.permutationsBuffer
           },
         },
         {
@@ -231,12 +157,18 @@ export default class Voxel {
           resource: {
             buffer: particleBuffers
           },
+        },
+        {
+          binding: 5,
+          resource: {
+            buffer: this.uniformBuffer
+          },
         }
       ]
     });
 
-    const computeCornersBindGroup = device.createBindGroup({
-      layout: computeCornersPipeline.getBindGroupLayout(0),
+    this.computeCornersBindGroup = device.createBindGroup({
+      layout: this.computeCornersPipeline.getBindGroupLayout(0),
       entries: [
         {
           binding: 1,
@@ -253,7 +185,7 @@ export default class Voxel {
       ]
     });
 
-    const computePositionsPipeline = device.createComputePipeline({
+    this.computePositionsPipeline = device.createComputePipeline({
       computeStage: {
         module: device.createShaderModule({
           code: glslang.compileGLSL(ComputePositions, 'compute'),
@@ -262,8 +194,8 @@ export default class Voxel {
       },
     });
 
-    const computePositionsBindGroup = device.createBindGroup({
-      layout: computePositionsPipeline.getBindGroupLayout(0),
+    this.computePositionsBindGroup = device.createBindGroup({
+      layout: this.computePositionsPipeline.getBindGroupLayout(0),
       entries: [
         {
           binding: 2,
@@ -274,19 +206,19 @@ export default class Voxel {
         {
           binding: 3,
           resource: {
-            buffer: cornerIndexBuffer
+            buffer: this.cornerIndexBuffer
           },
         }
       ]
     });
 
-    const voxelsBuffer = device.createBuffer({
+    this.voxelsBuffer = device.createBuffer({
       size: Float32Array.BYTES_PER_ELEMENT * 12 * 32 * 32 * 32,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
       mappedAtCreation: false,
     });
 
-    const computeVoxelsPipeline = device.createComputePipeline({
+    this.computeVoxelsPipeline = device.createComputePipeline({
       computeStage: {
         module: device.createShaderModule({
           code: glslang.compileGLSL(ComputeVoxels, 'compute'),
@@ -295,13 +227,13 @@ export default class Voxel {
       },
     });
 
-    const computeVoxelsBindGroup = device.createBindGroup({
-      layout: computeVoxelsPipeline.getBindGroupLayout(0),
+    this.computeVoxelsBindGroup = device.createBindGroup({
+      layout: this.computeVoxelsPipeline.getBindGroupLayout(0),
       entries: [
         {
           binding: 0,
           resource: {
-            buffer: permutationsBuffer
+            buffer: this.permutationsBuffer
           },
         },
         {
@@ -313,128 +245,36 @@ export default class Voxel {
         {
           binding: 3,
           resource: {
-            buffer: cornerIndexBuffer
+            buffer: this.cornerIndexBuffer
           },
         },
         {
           binding: 4,
           resource: {
-            buffer: voxelsBuffer
+            buffer: this.voxelsBuffer
+          },
+        },
+        {
+          binding: 5,
+          resource: {
+            buffer: this.uniformBuffer
           },
         }
       ]
     });
 
-    const voxelReadBuffer = device.createBuffer({
+    this.voxelReadBuffer = device.createBuffer({
       size: Float32Array.BYTES_PER_ELEMENT * 12 * 32 * 32 * 32,
       usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
+  }
 
-    const generateVertexIndices = (node, vertices, normals, nodeSize) => {
-      if (node == null)
-        return;
-
-      if (node.size > nodeSize) {
-        if (node.type != 'leaf') {
-          for (let i = 0; i < 8; i++) {
-            generateVertexIndices(node.children[i], vertices, normals, nodeSize);
-          }
-        }
-      }
-
-      if (node.type != 'internal') {
-        const d = node.drawInfo;
-        if (d == null) {
-          throw "Error! Could not add vertex!";
-        }
-
-        d.index = vertices.length / 3;
-        vertices.push(d.position[0], d.position[1], d.position[2]);
-        normals.push(d.averageNormal[0], d.averageNormal[1], d.averageNormal[2]);
-      }
-    }
-
-    const computeVoxels = (position, voxelCount, computedVoxelsData) => {
-      const computedVoxels = [];
-
-      if (voxelCount == 0) {
-        return;
-      }
-
-      for (let i = 0; i < voxelCount * 12; i += 12) {
-        if (computedVoxelsData[i + 11] != 0) {
-          const leaf = {
-            type: 'leaf',
-            size: 1,
-            min: vec3.fromValues(computedVoxelsData[i], computedVoxelsData[i + 1], computedVoxelsData[i + 2]),
-            drawInfo: {
-              position: vec3.fromValues(computedVoxelsData[i + 4], computedVoxelsData[i + 5], computedVoxelsData[i + 6]),
-              averageNormal: vec3.fromValues(computedVoxelsData[i + 8], computedVoxelsData[i + 9], computedVoxelsData[i + 10]),
-              corners: computedVoxelsData[i + 3]
-            }
-          };
-          computedVoxels.push(leaf);
-        }
-      }
-
-      const tree = ConstructOctree(computedVoxels, position, 32);
-
-
-      const vertices = [];
-      const normals = [];
-
-      generateVertexIndices(tree, vertices, normals, 1);
-
-      const indices = [];
-      ContourCells(tree, indices);
-
-      const newVertexBuffer = device.createBuffer({
-        size: vertices.length * 10 * Float32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.VERTEX,
-        mappedAtCreation: true,
-      });
-      const mapping = new Float32Array(newVertexBuffer.getMappedRange());
-      for (let i = 0; i < vertices.length; i += 3) {
-        mapping.set(vertices.slice(i, i + 3), (i / 3) * 10);
-        mapping.set([1], (i / 3) * 10 + 3);
-        mapping.set(normals.slice(i, i + 3), (i / 3) * 10 + 4);
-        mapping.set([1], (i / 3) * 10 + 8);
-      }
-      newVertexBuffer.unmap();
-
-      const newIndexBuffer = device.createBuffer({
-        size: indices.length * Uint16Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.INDEX,
-        mappedAtCreation: true,
-      });
-      const indexMapping = new Uint16Array(newIndexBuffer.getMappedRange());
-      indexMapping.set(indices);
-
-      newIndexBuffer.unmap();
-
-      const oldVertexBuffer = this.vertexBuffer;
-      this.vertexBuffer = newVertexBuffer;
-
-      const oldIndexBuffer = this.indexBuffer;
-      this.indexBuffer = newIndexBuffer;
-
-      oldVertexBuffer.destroy();
-      oldIndexBuffer.destroy();
-
-      this.indexCount = indices.length
-    }
-
-    let generating = false
-
-    document.addEventListener('keypress', (e) => {
-      if (e.key !== 'g' || generating === true) return;
-
-      generating = true;
-      let t0 = performance.now();
+  generate(device, queue, position) {
+    const promise = new Promise((resolve, reject) => {
 
       const permutations = new Int32Array(512);
 
-      var random = new Random(Math.random());
+      var random = new Random('James');
       for (let i = 0; i < 256; i++)
         permutations[i] = (256 * (random()));
 
@@ -442,126 +282,103 @@ export default class Voxel {
         permutations[i] = permutations[i - 256];
 
       device.queue.writeBuffer(
-        permutationsBuffer,
+        this.permutationsBuffer,
         0,
         permutations.buffer,
         permutations.byteOffset,
         permutations.byteLength
       );
 
+      device.queue.writeBuffer(
+        this.uniformBuffer,
+        0,
+        position.buffer,
+        position.byteOffset,
+        position.byteLength
+      );
+
       const computeEncoder = device.createCommandEncoder();
       const octreeSize = 32;
       const computePassEncoder = computeEncoder.beginComputePass();
-      computePassEncoder.setPipeline(computePipeline);
-      computePassEncoder.setBindGroup(0, computeBindGroup);
+      computePassEncoder.setPipeline(this.computePipeline);
+      computePassEncoder.setBindGroup(0, this.computeBindGroup);
       computePassEncoder.dispatch(octreeSize + 1, octreeSize + 1, octreeSize + 1);
       computePassEncoder.endPass();
 
       const computeCornersPass = computeEncoder.beginComputePass();
-      computeCornersPass.setPipeline(computeCornersPipeline);
-      computeCornersPass.setBindGroup(0, computeCornersBindGroup);
+      computeCornersPass.setPipeline(this.computeCornersPipeline);
+      computeCornersPass.setBindGroup(0, this.computeCornersBindGroup);
       computeCornersPass.dispatch(octreeSize, octreeSize, octreeSize);
       computeCornersPass.endPass();
 
       const computePositionsPass = computeEncoder.beginComputePass();
-      computePositionsPass.setPipeline(computePositionsPipeline);
-      computePositionsPass.setBindGroup(0, computePositionsBindGroup);
+      computePositionsPass.setPipeline(this.computePositionsPipeline);
+      computePositionsPass.setBindGroup(0, this.computePositionsBindGroup);
       computePositionsPass.dispatch(1);
       computePositionsPass.endPass();
 
       const copyEncoder = device.createCommandEncoder();
       copyEncoder.copyBufferToBuffer(
-        cornerIndexBuffer,
+        this.cornerIndexBuffer,
         0,
-        gpuReadBuffer,
+        this.gpuReadBuffer,
         0,
         Uint32Array.BYTES_PER_ELEMENT
       );
 
-      queue.push({
+      queue({
         items: [computeEncoder.finish(), copyEncoder.finish()],
         callback: () => {
+          this.gpuReadBuffer.mapAsync(GPUMapMode.READ).then(() => {
 
-          gpuReadBuffer.mapAsync(GPUMapMode.READ).then(() => {
-
-            const arrayBuffer = gpuReadBuffer.getMappedRange();
+            const arrayBuffer = this.gpuReadBuffer.getMappedRange();
             const voxelCount = new Uint32Array(arrayBuffer)[0];
-            console.log("Voxel Count: ", voxelCount);
-            gpuReadBuffer.unmap();
+            this.gpuReadBuffer.unmap();
+
+            if (voxelCount === 0) {
+              resolve({ vertices: new Float32Array(), normals: new Float32Array(), indices: new Uint16Array()});
+              return;
+            }
 
             const dispatchCount = Math.ceil(voxelCount / 128);
             const computeEncoder = device.createCommandEncoder();
             const computePassEncoder = computeEncoder.beginComputePass();
-            computePassEncoder.setPipeline(computeVoxelsPipeline);
-            computePassEncoder.setBindGroup(0, computeVoxelsBindGroup);
+            computePassEncoder.setPipeline(this.computeVoxelsPipeline);
+            computePassEncoder.setBindGroup(0, this.computeVoxelsBindGroup);
             computePassEncoder.dispatch(dispatchCount);
             computePassEncoder.endPass();
 
             const copyEncoder = device.createCommandEncoder();
             copyEncoder.copyBufferToBuffer(
-              voxelsBuffer,
+              this.voxelsBuffer,
               0,
-              voxelReadBuffer,
+              this.voxelReadBuffer,
               0,
               Float32Array.BYTES_PER_ELEMENT * voxelCount * 12
             );
 
-            queue.push({
+
+            queue({
               items: [computeEncoder.finish(), copyEncoder.finish()],
               callback: () => {
-                voxelReadBuffer.mapAsync(GPUMapMode.READ).then(() => {
-                  const arrayBuffer = voxelReadBuffer.getMappedRange();
-                  const computedVoxelsData = new Float32Array(arrayBuffer);
-                  computeVoxels(vec3.fromValues(0, 0, 0), voxelCount, computedVoxelsData);
 
-                  voxelReadBuffer.unmap();
-                  let t1 = performance.now();
-                  console.log(`Generation time: ${t1 - t0} milliseconds`)
-                  generating = false;
+                this.voxelReadBuffer.mapAsync(GPUMapMode.READ).then(() => {
+
+                  const arrayBuffer = this.voxelReadBuffer.getMappedRange();
+                  const computedVoxelsData = new Float32Array(arrayBuffer);
+                  const result = computeVoxels(position, voxelCount, computedVoxelsData);
+
+                  this.voxelReadBuffer.unmap();
+
+                  resolve(result);
                 });
               }
             });
           });
         }
       });
-    })
+    });
 
-  }
-
-  getTransformationMatrix(projectionMatrix) {
-    const viewMatrix = mat4.create();
-    mat4.translate(viewMatrix, viewMatrix, vec3.fromValues(-16, -16, -64));
-    const now = Date.now() / 1000;
-    mat4.rotate(
-      viewMatrix,
-      viewMatrix,
-      1,
-      vec3.fromValues(Math.sin(now), Math.cos(now), 0)
-    );
-
-    const modelViewProjectionMatrix = mat4.create();
-    mat4.multiply(modelViewProjectionMatrix, projectionMatrix, viewMatrix);
-
-    return modelViewProjectionMatrix;
-  }
-
-  update(device, projectionMatrix) {
-    const transformationMatrix = this.getTransformationMatrix(projectionMatrix);
-
-    device.queue.writeBuffer(
-      this.uniformBuffer,
-      0,
-      transformationMatrix.buffer,
-      transformationMatrix.byteOffset,
-      transformationMatrix.byteLength
-    );
-  }
-
-  draw(passEncoder) {
-    passEncoder.setPipeline(this.pipeline);
-    passEncoder.setBindGroup(0, this.uniformBindGroup);
-    passEncoder.setVertexBuffer(0, this.vertexBuffer);
-    passEncoder.setIndexBuffer(this.indexBuffer, 'uint16');
-    passEncoder.drawIndexed(this.indexCount);
+    return promise;
   }
 }

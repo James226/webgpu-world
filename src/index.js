@@ -1,6 +1,6 @@
 import { mat4 } from 'gl-matrix';
 import glslCompiler from '@webgpu/glslang/dist/web-devel-onefile/glslang';
-import Voxel from './voxel';
+import Game from './game';
 
 async function init(canvas) {
   const adapter = await navigator.gpu.requestAdapter();
@@ -9,7 +9,7 @@ async function init(canvas) {
 
   const aspect = Math.abs(canvas.width / canvas.height);
   const projectionMatrix = mat4.create();
-  mat4.perspective(projectionMatrix, (2 * Math.PI) / 5, aspect, 1, 100.0);
+  mat4.perspective(projectionMatrix, (2 * Math.PI) / 5, aspect, 1, 1000.0);
 
   const swapChainFormat = 'bgra8unorm';
 
@@ -19,16 +19,18 @@ async function init(canvas) {
     format: swapChainFormat,
   });
 
-  const voxel = new Voxel(device);
+  const game = new Game();
 
   const queue = [];
 
-  
+  game.init(device, queue, glslang);
 
-  voxel.init(device, queue, glslang);
+  const depthTexture = device.createTexture({
+    size: { width: canvas.width, height: canvas.height },
+    format: 'depth24plus-stencil8',
+    usage: GPUTextureUsage.RENDER_ATTACHMENT,
+  });
 
-  
-  
   const frame = (timestamp) => {
     const commandEncoder = device.createCommandEncoder();
     const textureView = swapChain.getCurrentTexture().createView();
@@ -38,17 +40,22 @@ async function init(canvas) {
         {
           attachment: textureView,
           loadValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
-        },
+        }
       ],
+      depthStencilAttachment: {
+        attachment: depthTexture.createView(),
+  
+        depthLoadValue: 1.0,
+        depthStoreOp: 'store',
+        stencilLoadValue: 0,
+        stencilStoreOp: 'store',
+      }
     };
 
-
-
-    voxel.update(device, projectionMatrix);
-
+    game.update(device, projectionMatrix);
 
     const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
-    voxel.draw(passEncoder);
+    game.draw(passEncoder);
     passEncoder.endPass();
 
     const item = queue.shift();
@@ -56,7 +63,6 @@ async function init(canvas) {
     device.queue.onSubmittedWorkDone().then(e => {
       if (item) {
         item.callback();
-        
       }
     })
     

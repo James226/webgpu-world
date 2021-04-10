@@ -65,21 +65,21 @@ const ContourProcessEdge = (node, dir, indices) => {
     if (!flip) {
 
       indices.push(indexes[0]);
-      indices.push(indexes[3]);
       indices.push(indexes[1]);
+      indices.push(indexes[3]);
 
       indices.push(indexes[0]);
-      indices.push(indexes[2]);
       indices.push(indexes[3]);
+      indices.push(indexes[2]);
     }
     else {
       indices.push(indexes[0]);
-      indices.push(indexes[1]);
       indices.push(indexes[3]);
+      indices.push(indexes[1]);
 
       indices.push(indexes[0]);
-      indices.push(indexes[3]);
       indices.push(indexes[2]);
+      indices.push(indexes[3]);
 
     }
   }

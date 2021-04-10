@@ -21,6 +21,10 @@ module.exports = {
       {
         test: /\.glsl$/i,
         use: 'raw-loader',
+      },
+      {
+        test: /\.worker\.js$/,
+        use: { loader: 'worker-loader' },
       }
     ],
   }
