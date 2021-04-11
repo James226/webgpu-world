@@ -22,7 +22,6 @@ import Voxel from './voxel';
     device.queue.submit(item.items);
   };
 
-  const worldSize = 5
 
   let generating = false;
   onmessage = async function(e) {
@@ -31,14 +30,21 @@ import Voxel from './voxel';
       return;
     }
     generating = true;
-    console.log('Starting generation');
+    const { stride } = e.data;
+    const worldSize =  Math.ceil(5 / stride);
+
+    console.log(`Starting generation. Stride: ${stride}`);
     const t0 = performance.now();
+    let i = 0;
     for (let x = 0; x < worldSize; x++)
     for (let y = 0; y < worldSize; y++)
     for (let z = 0; z < worldSize; z++) {
-      const i = x + (y * worldSize) + (z * worldSize * worldSize);
+      i = x + (y * worldSize) + (z * worldSize * worldSize);
 
-      const { vertices, normals, indices } = await voxel.generate(device, queue, vec3.fromValues(x * 31, y * 31, z * 31));
+      const positionStride = (31 * stride);
+      const { vertices, normals, indices } = await voxel.generate(device, queue, vec3.fromValues(x * positionStride, y * positionStride, z * positionStride), stride);
+
+      console.log(vertices, normals, indices);
       
       // const promise = new Promise(resolve => {
       //   voxelWorker.onmessage = function(e) {
@@ -51,6 +57,11 @@ import Voxel from './voxel';
       // const { vertices, normals, indices } = await promise;
 
       postMessage(({ i, vertices: vertices.buffer, normals: normals.buffer, indices: indices.buffer }), [vertices.buffer, normals.buffer, indices.buffer])
+      
+    }
+
+    for (let idx = i + 1; idx < 4 + (4 * 5) + (4 * 5 * 5); idx++) {
+      postMessage(({ i: idx, vertices: [], normals: [], indices: [] }));
       
     }
     generating = false;

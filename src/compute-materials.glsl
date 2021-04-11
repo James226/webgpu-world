@@ -13,6 +13,7 @@ layout(std430, set = 0, binding = 1) buffer ParticlesA {
 
 layout(binding = 5) uniform UniformBufferObject {
     vec3 chunkPosition;
+		float stride;
 };
 
 float Box(vec3 worldPosition, vec3 origin, vec3 halfDimensions)
@@ -193,7 +194,7 @@ float worldRadius = 50.0f;
 void main ()
 {
     uint index = gl_GlobalInvocationID.z * width * width + gl_GlobalInvocationID.y * width + gl_GlobalInvocationID.x;
-    vec3 cornerPos = vec3(float(gl_GlobalInvocationID.x), float(gl_GlobalInvocationID.y), float(gl_GlobalInvocationID.z));
+    vec3 cornerPos = vec3(float(gl_GlobalInvocationID.x * stride), float(gl_GlobalInvocationID.y * stride), float(gl_GlobalInvocationID.z * stride));
 
     float density = getDensity(cornerPos + chunkPosition);
     uint material = density < 0.0f ? 1u : 0u;

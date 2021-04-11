@@ -6,7 +6,6 @@ import ContouringWorker from './contouring.worker';
 class Game {
   init(device, queue, glslang) {
     var voxelWorker = new ContouringWorker();
-    voxelWorker.postMessage(['a','b']);
 
     const worldSize = 5
 
@@ -25,6 +24,8 @@ class Game {
 
     let generating = false;
 
+    let stride = 32;
+
     document.addEventListener('keypress', async (e) => {
       if (e.key !== 'g' || generating === true) return;
 
@@ -35,10 +36,16 @@ class Game {
         if (vertices.byteLength) {
           this.drawables[i].setVertexBuffer(device, new Float32Array(vertices), new Float32Array(normals));
           this.drawables[i].setIndexBuffer(device, new Uint16Array(indices));
+        } else {
+          this.drawables[i].setVertexBuffer(device, new Float32Array(), new Float32Array());
+          this.drawables[i].setIndexBuffer(device, new Uint16Array());
         }
       };
 
-      voxelWorker.postMessage({ });
+      voxelWorker.postMessage({ stride });
+
+      stride /= 2;
+      if (stride < 1) stride = 32;
 
       // for (let x = 0; x < worldSize; x++)
       // for (let y = 0; y < worldSize; y++)

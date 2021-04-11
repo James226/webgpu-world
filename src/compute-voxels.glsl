@@ -34,6 +34,7 @@ uint octreeSize = 32u;
 
 layout(binding = 5) uniform UniformBufferObject {
     vec3 chunkPosition;
+		float stride;
 };
 
 
@@ -458,21 +459,16 @@ void main()
 	{
 		uint ures = 32u;
 		
-		uint nodeSize = uint(HIGHEST_RESOLUTION) / octreeSize;
+		uint nodeSize = uint(stride);
 	
 		uint voxelIndex = cornerIndexes[trueIndex];
 		uint z = voxelIndex / (ures * ures);
 		uint y = (voxelIndex - (z * ures * ures)) / ures;
 		uint x = voxelIndex - (z * ures * ures) - (y * ures);
 
-		// uint x = (voxelIndex / (ures * ures));
-		// uint y = ((voxelIndex - x * ures * ures) / ures);
-		// uint z = voxelIndex - ures * (y + ures * x);
-
 		uint corners = voxelMaterials[voxelIndex];
 
 		vec3 nodePos = vec3(float(x * nodeSize), float(y * nodeSize), float (z * nodeSize)) + chunkPosition;
-		//voxMins[trueIndex] = nodePos;
 		voxels[trueIndex].voxMin = nodePos;
 		int MAX_CROSSINGS = 6;
 		int edgeCount = 0;
@@ -508,27 +504,16 @@ void main()
 		
 		averageNormal = normalize(averageNormal / float(edgeCount));
 		
-		//cornerIndexes[trueIndex] = corners;
-		
 		vec3 com = vec3(pointaccum.x, pointaccum.y, pointaccum.z) / pointaccum.w;
 		vec4 solved_position = vec4(0, 0, 0, 0);
 		
-		if (nodeSize == 1u)
-		{
-			float error = qef_solve(ATA, Atb, pointaccum, solved_position);
-			
-			vec3 Min = nodePos;
-			vec3 Max = nodePos + vec3(1.0f, 1.0f, 1.0f);
-			if (solved_position.x < Min.x || solved_position.x > Max.x ||
-			    solved_position.y < Min.y || solved_position.y > Max.y ||
-			    solved_position.z < Min.z || solved_position.z > Max.z)
-			{
-				solved_position.x = com.x;
-				solved_position.y = com.y;
-				solved_position.z = com.z;
-			}
-		}
-		else
+		float error = qef_solve(ATA, Atb, pointaccum, solved_position);
+		
+		vec3 Min = nodePos;
+		vec3 Max = nodePos + vec3(1.0f, 1.0f, 1.0f);
+		if (solved_position.x < Min.x || solved_position.x > Max.x ||
+				solved_position.y < Min.y || solved_position.y > Max.y ||
+				solved_position.z < Min.z || solved_position.z > Max.z)
 		{
 			solved_position.x = com.x;
 			solved_position.y = com.y;

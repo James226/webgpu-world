@@ -1,4 +1,4 @@
-import { vec3 } from 'gl-matrix';
+import { vec3, vec4 } from 'gl-matrix';
 import ComputeShader from './compute-materials.glsl';
 import ComputeCorners from './compute-corners.glsl';
 import ComputePositions from './compute-positions.glsl';
@@ -31,7 +31,7 @@ const generateVertexIndices = (node, vertices, normals, nodeSize) => {
   }
 }
 
-const computeVoxels = (position, voxelCount, computedVoxelsData) => {
+const computeVoxels = (position, stride, voxelCount, computedVoxelsData) => {
   const computedVoxels = [];
 
   if (voxelCount == 0) {
@@ -42,7 +42,7 @@ const computeVoxels = (position, voxelCount, computedVoxelsData) => {
     if (computedVoxelsData[i + 11] != 0) {
       const leaf = {
         type: 'leaf',
-        size: 1,
+        size: stride,
         min: vec3.fromValues(computedVoxelsData[i], computedVoxelsData[i + 1], computedVoxelsData[i + 2]),
         drawInfo: {
           position: vec3.fromValues(computedVoxelsData[i + 4], computedVoxelsData[i + 5], computedVoxelsData[i + 6]),
@@ -54,7 +54,7 @@ const computeVoxels = (position, voxelCount, computedVoxelsData) => {
     }
   }
 
-  const tree = ConstructOctree(computedVoxels, position, 32);
+  const tree = ConstructOctree(computedVoxels, position, 32 * stride);
 
 
   const vertices = [];
@@ -94,7 +94,7 @@ export default class Voxel {
       },
     });
 
-    const uniformBufferSize = 4 * 3;
+    const uniformBufferSize = 4 * 4;
     this.uniformBuffer = device.createBuffer({
       size: uniformBufferSize,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
@@ -269,7 +269,9 @@ export default class Voxel {
     });
   }
 
-  generate(device, queue, position) {
+  generate(device, queue, position, stride) {
+    if (!stride) stride = 1;
+
     const promise = new Promise((resolve, reject) => {
 
       const permutations = new Int32Array(512);
@@ -289,12 +291,13 @@ export default class Voxel {
         permutations.byteLength
       );
 
+      const uniform = vec4.fromValues(position[0], position[1], position[2], stride);
       device.queue.writeBuffer(
         this.uniformBuffer,
         0,
-        position.buffer,
-        position.byteOffset,
-        position.byteLength
+        uniform.buffer,
+        uniform.byteOffset,
+        uniform.byteLength
       );
 
       const computeEncoder = device.createCommandEncoder();
@@ -333,6 +336,7 @@ export default class Voxel {
 
             const arrayBuffer = this.gpuReadBuffer.getMappedRange();
             const voxelCount = new Uint32Array(arrayBuffer)[0];
+            console.log('Voxel count', voxelCount);
             this.gpuReadBuffer.unmap();
 
             if (voxelCount === 0) {
@@ -366,7 +370,7 @@ export default class Voxel {
 
                   const arrayBuffer = this.voxelReadBuffer.getMappedRange();
                   const computedVoxelsData = new Float32Array(arrayBuffer);
-                  const result = computeVoxels(position, voxelCount, computedVoxelsData);
+                  const result = computeVoxels(position, stride, voxelCount, computedVoxelsData);
 
                   this.voxelReadBuffer.unmap();
 
