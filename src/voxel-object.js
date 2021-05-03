@@ -1,67 +1,11 @@
-import VertexShader from './vertex.glsl';
-import FragmentShader from './fragment.glsl';
-import { mat4, vec3 } from 'gl-matrix';
+import { mat4 } from 'gl-matrix';
 
-const swapChainFormat = 'bgra8unorm';
-
-
-export default class Drawable {
+export default class VoxelObject {
   constructor(position) {
     this.position = position;
   }
 
-  init(device, queue, glslang) {
-    this.pipeline = device.createRenderPipeline({
-      vertex: {
-        module:
-          device.createShaderModule({
-            code: glslang.compileGLSL(VertexShader, 'vertex'),
-          }),
-        buffers: [
-          {
-            arrayStride: 4 * 10,
-            attributes: [
-              {
-                // position
-                shaderLocation: 0,
-                offset: 0,
-                format: 'float32x4',
-              },
-              {
-                // color
-                shaderLocation: 1,
-                offset: 4 * 4,
-                format: 'float32x4',
-              },
-            ],
-          },
-        ],
-        entryPoint: 'main',
-      },
-      fragment: {
-        module:
-          device.createShaderModule({
-            code: glslang.compileGLSL(FragmentShader, 'fragment')
-          }),
-        entryPoint: 'main',
-        targets: [
-          {
-            format: swapChainFormat,
-          },
-        ]
-      },
-
-      primitive: {
-        topology: 'triangle-list',
-        cullMode: 'back',
-      },
-      depthStencil: {
-        depthWriteEnabled: true,
-        depthCompare: 'less',
-        format: 'depth24plus-stencil8',
-      },
-    });
-
+  init(device, pipeline) {
     const cubeVertexArray = new Float32Array([]);
 
     this.vertexBuffer = device.createBuffer({
@@ -91,7 +35,7 @@ export default class Drawable {
     });
 
     this.uniformBindGroup = device.createBindGroup({
-      layout: this.pipeline.getBindGroupLayout(0),
+      layout: pipeline.getBindGroupLayout(0),
       entries: [
         {
           binding: 0,
@@ -164,7 +108,6 @@ export default class Drawable {
   }
 
   draw(passEncoder) {
-    passEncoder.setPipeline(this.pipeline);
     passEncoder.setBindGroup(0, this.uniformBindGroup);
     passEncoder.setVertexBuffer(0, this.vertexBuffer);
     passEncoder.setIndexBuffer(this.indexBuffer, 'uint16');

@@ -30,7 +30,7 @@ void main() {
 
   gl_Position = uniforms.modelViewProjectionMatrix * position;
 
-  vec3 result = light.diffuse * lambert(color.rgb, light.position);
+  vec3 result = vec3(0.2, 0.2, 0.2) + light.diffuse * lambert(color.rgb, light.position);
 
   fragColor = vec4(result.rgb, 1.0);
 }

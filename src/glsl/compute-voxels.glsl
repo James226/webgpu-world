@@ -1,5 +1,9 @@
 #version 310 es
+
+#define OctreeSize 32
 #define HIGHEST_RESOLUTION 32
+
+const uint width = uint(OctreeSize) + 1u;
 
 struct GPUVOX
 {
@@ -187,6 +191,7 @@ float CLerp(float a, float b, float t)
 }
 
 float getDensity(vec3 worldPosition) {
+
 	//return Box(worldPosition, vec3(5.0, 5.0, 5.0), vec3(2.0, 2.0, 2.0));
     //float box = Box(worldPosition, vec3(10.0, 20.0, 20.0), vec3(5.0, 5.0, 5.0));
 
@@ -194,8 +199,8 @@ float getDensity(vec3 worldPosition) {
 
     // float world = min(box, sphere);
     // return max(world, -Sphere(worldPosition, vec3(7.0, 7.0, 12.0), 2.0));
-float worldRadius = 50.0f;
-	vec3 world = worldPosition - vec3(70.0, 70.0, 70.0);
+	float worldRadius = 100.0f;
+	vec3 world = worldPosition - vec3(0.0, 0.0, 0.0);
 	float worldDist = -worldRadius + length(world);
 
 	float flatlandNoiseScale = 3.0f;
@@ -228,8 +233,8 @@ float worldRadius = 50.0f;
 				flatlandLerpAmount + ((rockyLerpAmount - flatlandLerpAmount) * rockyBlend));
 	
 	float result = ((worldDist) / worldRadius) + CLerp(mountain, blob, minMountainMixLerpAmount + ((maxMountainMixLerpAmount - minMountainMixLerpAmount) * mountainBlend));
-	float floor = max(-Box(worldPosition, vec3(5.0, 5.0, 5.0), vec3(3.0, 3.0, 3.0)), worldPosition.y - 4.0);
-	return max(-Sphere(worldPosition, vec3(20.0, 48.0, 48.0), 10.0), min(result, Box(worldPosition, vec3(10.0, 10.0, 10.0), vec3(3.0, 3.0, 3.0))));
+	return result;
+	//return max(-result, max(-Sphere(worldPosition, vec3(20.0, 48.0, 48.0), 10.0), min(result, Box(worldPosition, vec3(0.0, 0.0, 0.0), vec3(300.0, 300.0, 300.0)))));
 }
 
 vec3 ApproximateZeroCrossingPosition(vec3 p0, vec3 p1)

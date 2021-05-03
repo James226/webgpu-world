@@ -1,8 +1,8 @@
 import { vec3, vec4 } from 'gl-matrix';
-import ComputeShader from './compute-materials.glsl';
-import ComputeCorners from './compute-corners.glsl';
-import ComputePositions from './compute-positions.glsl';
-import ComputeVoxels from './compute-voxels.glsl';
+import ComputeMaterials from './compute-materials.wgsl';
+import ComputeCorners from './compute-corners.wgsl';
+import ComputePositions from './compute-positions.wgsl';
+import ComputeVoxels from './compute-voxels.wgsl';
 import Random from 'seedrandom';
 import ContourCells from './contouring';
 import ConstructOctree from './octree';
@@ -75,20 +75,21 @@ const computeVoxels = (position, stride, voxelCount, computedVoxelsData) => {
 
 export default class Voxel {
 
-  init(device, queue, glslang) {
+  async init(device, queue, glslang) {
+    
     this.computePipeline = device.createComputePipeline({
-      computeStage: {
+      compute: {
         module: device.createShaderModule({
-          code: glslang.compileGLSL(ComputeShader, 'compute'),
+          code: ComputeMaterials,
         }),
         entryPoint: 'main',
       },
     });
 
-    this.computeCornersPipeline = device.createComputePipeline({
-      computeStage: {
+    this.computeCornersPipeline = await device.createComputePipelineAsync({
+      compute: {
         module: device.createShaderModule({
-          code: glslang.compileGLSL(ComputeCorners, 'compute'),
+          code: ComputeCorners
         }),
         entryPoint: 'main',
       },
@@ -185,10 +186,10 @@ export default class Voxel {
       ]
     });
 
-    this.computePositionsPipeline = device.createComputePipeline({
-      computeStage: {
+    this.computePositionsPipeline = await device.createComputePipelineAsync({
+      compute: {
         module: device.createShaderModule({
-          code: glslang.compileGLSL(ComputePositions, 'compute'),
+          code: ComputePositions,
         }),
         entryPoint: 'main',
       },
@@ -218,10 +219,10 @@ export default class Voxel {
       mappedAtCreation: false,
     });
 
-    this.computeVoxelsPipeline = device.createComputePipeline({
-      computeStage: {
+    this.computeVoxelsPipeline = await device.createComputePipelineAsync({
+      compute: {
         module: device.createShaderModule({
-          code: glslang.compileGLSL(ComputeVoxels, 'compute'),
+          code: ComputeVoxels,
         }),
         entryPoint: 'main',
       },

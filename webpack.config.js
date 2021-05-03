@@ -19,7 +19,7 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.glsl$/i,
+        test: /\.(glsl|wgsl)$/i,
         use: 'raw-loader',
       },
       {
