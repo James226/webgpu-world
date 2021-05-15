@@ -327,6 +327,9 @@ fn svd_rotateq_xy(x: f32, y: f32, z: f32, c: f32, s: f32) -> vec2<f32>
 var<private> vtav: mat3x3<f32>;
 var<private> v: mat3x3<f32>;
 var<private> ATA: array<f32, 6>;
+var<private> Atb: vec4<f32>;
+var<private> pointaccum: vec4<f32>;
+var<private> btb: f32;
 
 fn svd_rotate(a: i32, b: i32)
 {
@@ -421,14 +424,14 @@ fn svd_pseudoinverse(sigma: vec4<f32>, c: mat3x3<f32>) -> mat3x3<f32>
 	);
 }
 
-fn svd_solve_ATA_Atb(Atb: vec4<f32>) -> vec4<f32>
+fn svd_solve_ATA_Atb(a: vec4<f32>) -> vec4<f32>
 {
 	v = mat3x3<f32>(vec3<f32>(1.0, 0.0, 0.0), vec3<f32>(0.0, 1.0, 0.0), vec3<f32>(0.0, 0.0, 1.0));
 	
 	let sigma: vec4<f32> = svd_solve_sym(ATA);
 	
 	let Vinv: mat3x3<f32> = svd_pseudoinverse(sigma, v);
-	return svd_mul_matrix_vec(Vinv, Atb);
+	return svd_mul_matrix_vec(Vinv, a);
 }
 
 fn svd_vmul_sym(v: vec4<f32>) -> vec4<f32>
@@ -445,126 +448,134 @@ fn svd_vmul_sym(v: vec4<f32>) -> vec4<f32>
 
 // // QEF
 
-// void qef_add(vec4 n, vec4 p, inout float[6] ATA, inout vec4 Atb, inout vec4 pointaccum, inout float btb)
-// {
-// 	ATA[0] += n.x * n.x;
-// 	ATA[1] += n.x * n.y;
-// 	ATA[2] += n.x * n.z;
-// 	ATA[3] += n.y * n.y;
-// 	ATA[4] += n.y * n.z;
-// 	ATA[5] += n.z * n.z;
+fn qef_add(n: vec4<f32>, p: vec4<f32>)
+{
+	ATA[0] = ATA[0] + n.x * n.x;
+	ATA[1] = ATA[1] + n.x * n.y;
+	ATA[2] = ATA[2] + n.x * n.z;
+	ATA[3] = ATA[3] + n.y * n.y;
+	ATA[4] = ATA[4] + n.y * n.z;
+	ATA[5] = ATA[5] + n.z * n.z;
 	
-// 	float b = dot(p, n);
-// 	Atb.x += n.x * b;
-// 	Atb.y += n.y * b;
-// 	Atb.z += n.z * b;
-// 	btb += b * b;
+	let b: f32 = dot(p, n);
+	Atb.x = Atb.x +n.x * b;
+	Atb.y = Atb.y +n.y * b;
+	Atb.z = Atb.z +n.z * b;
+	btb = btb + b * b;
 	
-// 	pointaccum.x += p.x;
-// 	pointaccum.y += p.y;
-// 	pointaccum.z += p.z;
-// 	pointaccum.w += 1.0f;
-// }
+	pointaccum.x = pointaccum.x +p.x;
+	pointaccum.y = pointaccum.y +p.y;
+	pointaccum.z = pointaccum.z +p.z;
+	pointaccum.w = pointaccum.w +1.0;
+}
 
-// float qef_calc_error(float[6] A, vec4 x, vec4 b)
-// {
-// 	vec4 tmp = vec4(0, 0, 0, 0);
-// 	svd_vmul_sym(tmp, A, x);
-// 	tmp = b - tmp;
+fn qef_calc_error(A: array<f32, 6>, x: vec4<f32>, b: vec4<f32>) -> f32
+{
+	var tmp: vec4<f32> = svd_vmul_sym(x);
+	tmp = b - tmp;
 	
-// 	return dot(tmp, tmp);
-// }
+	return dot(tmp, tmp);
+}
 
-// float qef_solve(float[6] ATA, vec4 Atb, vec4 pointaccum, inout vec4 x)
-// {
-// 	vec4 masspoint = pointaccum / pointaccum.w;
+fn qef_solve() -> vec4<f32>
+{
+	let masspoint: vec4<f32> = vec4<f32>(pointaccum.x / pointaccum.w, pointaccum.y / pointaccum.w, pointaccum.z / pointaccum.w, pointaccum.w / pointaccum.w);
 	
-// 	vec4 A_mp = vec4(0, 0, 0, 0);
-// 	svd_vmul_sym(A_mp, ATA, masspoint);
-// 	A_mp = Atb - A_mp;
+	var A_mp: vec4<f32> = svd_vmul_sym(masspoint);
+	A_mp = Atb - A_mp;
 	
-// 	svd_solve_ATA_Atb(ATA, A_mp, x);
+	let x: vec4<f32> = svd_solve_ATA_Atb(A_mp);
 	
-// 	float error = qef_calc_error(ATA, x, Atb);
-// 	x += masspoint;
+	let error: f32 = qef_calc_error(ATA, x, Atb);
+	let r: vec4<f32> = x + masspoint;
 	
-// 	return error;
-// }
+	return vec4<f32>(r.x, r.y, r.z, error);
+}
 
 
 
 [[stage(compute), workgroup_size(128)]]
 fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) {
-	// uint trueIndex = gl_GlobalInvocationID.x;
+	let trueIndex: u32 = GlobalInvocationID.x;
 
-	// if (trueIndex < cornerCount)
-	// {
-	// 	uint ures = 32u;
+	if (trueIndex < cornerIndex.cornerCount)
+	{
+		let ures: u32 = 32u;
 		
-	// 	uint nodeSize = uint(stride);
+		let nodeSize: u32 = u32(uniforms.stride);
 	
-	// 	uint voxelIndex = cornerIndexes[trueIndex];
-	// 	uint z = voxelIndex / (ures * ures);
-	// 	uint y = (voxelIndex - (z * ures * ures)) / ures;
-	// 	uint x = voxelIndex - (z * ures * ures) - (y * ures);
+		let voxelIndex: u32 = cornerIndex.cornerIndexes[trueIndex];
+		let z: u32 = voxelIndex / (ures * ures);
+		let y: u32 = (voxelIndex - (z * ures * ures)) / ures;
+		let x: u32 = voxelIndex - (z * ures * ures) - (y * ures);
 
-	// 	uint corners = voxelMaterials[voxelIndex];
+		let corners: u32 = voxelMaterials.voxelMaterials[voxelIndex];
 
-	// 	vec3 nodePos = vec3(float(x * nodeSize), float(y * nodeSize), float (z * nodeSize)) + chunkPosition;
-	// 	voxels[trueIndex].voxMin = nodePos;
-	// 	int MAX_CROSSINGS = 6;
-	// 	int edgeCount = 0;
+		let nodePos: vec3<f32> = vec3<f32>(f32(x * nodeSize), f32(y * nodeSize), f32 (z * nodeSize)) + uniforms.chunkPosition;
+		voxels.voxels[trueIndex].voxMin = nodePos;
+		let MAX_CROSSINGS: i32 = 6;
+		var edgeCount: i32 = 0;
 		
-	// 	vec4 pointaccum = vec4(0, 0, 0, 0);
-	// 	float ATA[6] = float[](0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-	// 	vec4 Atb = vec4(0, 0, 0, 0);
-	// 	vec3 averageNormal = vec3(0, 0, 0);
-	// 	float btb = 0.0;
+		pointaccum = vec4<f32>(0.0, 0.0, 0.0, 0.0);
+		ATA = array<f32, 6>(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+		Atb = vec4<f32>(0.0, 0.0, 0.0, 0.0);
+		var averageNormal: vec3<f32> = vec3<f32>(0.0, 0.0, 0.0);
+		btb = 0.0;
 
-	// 	for (int j = 0; j < 12 && edgeCount <= MAX_CROSSINGS; j++)
-	// 	{
-	// 		int c1 = edgevmap[j].x;
-	// 		int c2 = edgevmap[j].y;
+		var j: i32 = 0;
+		loop {
+			if (!(j < 12 && edgeCount <= MAX_CROSSINGS)) {
+				break;
+			}
 
-	// 		uint m1 = (corners >> c1) & 1u;
-	// 		uint m2 = (corners >> c2) & 1u;
+			let c1: i32 = edgevmap[j].x;
+			let c2: i32 = edgevmap[j].y;
+
+			let m1: u32 = (corners >> u32(c1)) & 1u;
+			let m2: u32 = (corners >> u32(c2)) & 1u;
 			
-	// 		if (!((m1 == 0u && m2 == 0u) || (m1 == 1u && m2 == 1u)))
-	// 		{
-	// 			vec3 p1 = nodePos + (CHILD_MIN_OFFSETS[c1] * float(nodeSize));
-	// 			vec3 p2 = nodePos + (CHILD_MIN_OFFSETS[c2] * float(nodeSize));
-	// 			vec3 p = ApproximateZeroCrossingPosition(p1, p2);
-	// 			vec3 n = CalculateSurfaceNormal(p);
+			if (!((m1 == 0u && m2 == 0u) || (m1 == 1u && m2 == 1u)))
+			{
+				let p1: vec3<f32> = nodePos + vec3<f32>(f32(CHILD_MIN_OFFSETS[c1].x * nodeSize), f32(CHILD_MIN_OFFSETS[c1].y * nodeSize), f32(CHILD_MIN_OFFSETS[c1].z * nodeSize));
+				let p2: vec3<f32> = nodePos + vec3<f32>(f32(CHILD_MIN_OFFSETS[c2].x * nodeSize), f32(CHILD_MIN_OFFSETS[c2].y * nodeSize), f32(CHILD_MIN_OFFSETS[c2].z * nodeSize));
+				let p: vec3<f32> = ApproximateZeroCrossingPosition(p1, p2);
+				let n: vec3<f32> = CalculateSurfaceNormal(p);
 				
-	// 			qef_add(vec4(n.x, n.y, n.z, 0), vec4(p.x, p.y, p.z, 0), ATA, Atb, pointaccum, btb);
+				qef_add(vec4<f32>(n.x, n.y, n.z, 0.0), vec4<f32>(p.x, p.y, p.z, 0.0));
 				
-	// 			averageNormal += n;
+				averageNormal = averageNormal + n;
 				
-	// 			edgeCount++;
-	// 		}
-	// 	}
+				edgeCount = edgeCount + 1;
+			}
+
+			continuing {
+				j = j + 1;
+			}
+		}
 		
-	// 	averageNormal = normalize(averageNormal / float(edgeCount));
 		
-	// 	vec3 com = vec3(pointaccum.x, pointaccum.y, pointaccum.z) / pointaccum.w;
+		averageNormal = normalize(averageNormal / vec3<f32>(f32(edgeCount), f32(edgeCount), f32(edgeCount)));
+		
+		let com: vec3<f32> = vec3<f32>(pointaccum.x / pointaccum.w, pointaccum.y / pointaccum.w, pointaccum.z / pointaccum.w);
 	// 	vec4 solved_position = vec4(0, 0, 0, 0);
 		
-	// 	float error = qef_solve(ATA, Atb, pointaccum, solved_position);
+		let result: vec4<f32> = qef_solve();
+		var solved_position: vec3<f32> = result.xyz;
+		let error: f32 = result.w;
+
 		
-	// 	vec3 Min = nodePos;
-	// 	vec3 Max = nodePos + vec3(1.0f, 1.0f, 1.0f);
-	// 	if (solved_position.x < Min.x || solved_position.x > Max.x ||
-	// 			solved_position.y < Min.y || solved_position.y > Max.y ||
-	// 			solved_position.z < Min.z || solved_position.z > Max.z)
-	// 	{
-	// 		solved_position.x = com.x;
-	// 		solved_position.y = com.y;
-	// 		solved_position.z = com.z;
-	// 	}
+		let Min: vec3<f32> = nodePos;
+		let Max: vec3<f32> = nodePos + vec3<f32>(1.0, 1.0, 1.0);
+		if (solved_position.x < Min.x || solved_position.x > Max.x ||
+				solved_position.y < Min.y || solved_position.y > Max.y ||
+				solved_position.z < Min.z || solved_position.z > Max.z)
+		{
+			solved_position = com;
+		}
 		
-	// 	voxels[trueIndex].vertPoint = vec3(solved_position.x, solved_position.y, solved_position.z);
-	// 	voxels[trueIndex].avgNormal = averageNormal;
-	// 	voxels[trueIndex].numPoints = float(edgeCount);
-	// 	voxels[trueIndex].corners = float(voxelMaterials[voxelIndex]);
-	// }
+		voxels.voxels[trueIndex].vertPoint = solved_position;
+		voxels.voxels[trueIndex].avgNormal = averageNormal;
+		voxels.voxels[trueIndex].numPoints = f32(edgeCount);
+		voxels.voxels[trueIndex].corners = f32(voxelMaterials.voxelMaterials[voxelIndex]);
+	}
 }
