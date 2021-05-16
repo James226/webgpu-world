@@ -13,20 +13,21 @@ export default class Controller {
   }
 
   update(device, projectionMatrix, timestamp) {
+    const distance = this.keyboard.keydown('shift') ? timestamp * 10 : timestamp;
     if (this.keyboard.keydown('w')) {
-      this.position[2] -= timestamp;
+      this.position[2] -= distance;
     }
 
     if (this.keyboard.keydown('s')) {
-      this.position[2] += timestamp;
+      this.position[2] += distance;
     }
 
     if (this.keyboard.keydown('a')) {
-      this.position[0] -= timestamp;
+      this.position[0] -= distance;
     }
 
     if (this.keyboard.keydown('d')) {
-      this.position[0] += timestamp;
+      this.position[0] += distance;
     }
 
     if (this.keyboard.keydown('arrowleft')) {

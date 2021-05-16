@@ -77,14 +77,18 @@ export default class Voxel {
 
   async init(device, queue, glslang) {
     
-    this.computePipeline = device.createComputePipeline({
+    const start = performance.now();
+    console.log('Start loading voxel engine', performance.now() - start);
+    this.computePipeline = await device.createComputePipelineAsync({
       compute: {
         module: device.createShaderModule({
-          code: ComputeMaterials,
+          code: ComputeVoxels,
         }),
-        entryPoint: 'main',
+        entryPoint: 'computeMaterials',
       },
     });
+
+    console.log('10', performance.now() - start);
 
     this.computeCornersPipeline = await device.createComputePipelineAsync({
       compute: {
@@ -144,6 +148,16 @@ export default class Voxel {
     );
     this.permutationsBuffer.unmap();
 
+    
+
+    this.voxelsBuffer = device.createBuffer({
+      size: Float32Array.BYTES_PER_ELEMENT * 12 * 32 * 32 * 32,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
+      mappedAtCreation: false,
+    });
+
+    console.log('20', performance.now() - start);
+
     this.computeBindGroup = device.createBindGroup({
       layout: this.computePipeline.getBindGroupLayout(0),
       entries: [
@@ -157,6 +171,24 @@ export default class Voxel {
           binding: 1,
           resource: {
             buffer: particleBuffers
+          },
+        },
+        {
+          binding: 2,
+          resource: {
+            buffer: voxelMaterialsBuffer
+          },
+        },
+        {
+          binding: 3,
+          resource: {
+            buffer: this.cornerIndexBuffer
+          },
+        },
+        {
+          binding: 4,
+          resource: {
+            buffer: this.voxelsBuffer
           },
         },
         {
@@ -195,6 +227,9 @@ export default class Voxel {
       },
     });
 
+    console.log('30', performance.now() - start);
+
+
     this.computePositionsBindGroup = device.createBindGroup({
       layout: this.computePositionsPipeline.getBindGroupLayout(0),
       entries: [
@@ -213,20 +248,22 @@ export default class Voxel {
       ]
     });
 
-    this.voxelsBuffer = device.createBuffer({
-      size: Float32Array.BYTES_PER_ELEMENT * 12 * 32 * 32 * 32,
-      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
-      mappedAtCreation: false,
+    console.log('31', performance.now() - start);
+
+    const module = device.createShaderModule({
+      code: ComputeVoxels,
     });
 
+    console.log('31.5', performance.now() - start);
     this.computeVoxelsPipeline = await device.createComputePipelineAsync({
       compute: {
-        module: device.createShaderModule({
-          code: ComputeVoxels,
-        }),
+        module,
         entryPoint: 'main',
       },
     });
+
+    console.log('32', performance.now() - start);
+
 
     this.computeVoxelsBindGroup = device.createBindGroup({
       layout: this.computeVoxelsPipeline.getBindGroupLayout(0),
@@ -235,6 +272,12 @@ export default class Voxel {
           binding: 0,
           resource: {
             buffer: this.permutationsBuffer
+          },
+        },
+        {
+          binding: 1,
+          resource: {
+            buffer: particleBuffers
           },
         },
         {
@@ -264,10 +307,15 @@ export default class Voxel {
       ]
     });
 
+    console.log('40', performance.now() - start);
+
+
     this.voxelReadBuffer = device.createBuffer({
       size: Float32Array.BYTES_PER_ELEMENT * 12 * 32 * 32 * 32,
       usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
+
+    console.log('Done', performance.now() - start);
   }
 
   generate(device, queue, position, stride) {

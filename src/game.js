@@ -6,7 +6,7 @@ import Keyboard from './keyboard';
 import VoxelCollection from './voxel-collection';
 
 class Game {
-  init(device, queue, glslang) {
+  async init(device, queue, glslang) {
     this.voxelWorker = new ContouringWorker();
 
     const worldSize = 10;
@@ -32,16 +32,17 @@ class Game {
     this.collection = new VoxelCollection();
     this.collection.init(device, queue, glslang);
 
-    for (let x = 0; x < worldSize; x++)
-    for (let y = 0; y < worldSize; y++)
-    for (let z = 0; z < worldSize; z++) {
-      this.drawables[x + (y * worldSize) + (z * worldSize * worldSize)] = new Drawable(vec3.create());
-      this.drawables[x + (y * worldSize) + (z * worldSize * worldSize)].init(device, queue, glslang);
-    }
+    // for (let x = 0; x < worldSize; x++)
+    // for (let y = 0; y < worldSize; y++)
+    // for (let z = 0; z < worldSize; z++) {
+    //   this.drawables[x + (y * worldSize) + (z * worldSize * worldSize)] = new Drawable(vec3.create());
+    //   this.drawables[x + (y * worldSize) + (z * worldSize * worldSize)].init(device, queue, glslang);
+    // }
 
     this.generating = false;
 
-    this.stride = 32;
+    this.stride = 2 << 13;
+    console.log(this.stride);
   }
 
   generate(device) {
@@ -53,8 +54,8 @@ class Game {
         const { type, i, vertices, normals, indices } = data;
         switch (type) {
           case 'clear':
-            this.drawables[i].setVertexBuffer(device, new Float32Array(), new Float32Array());
-            this.drawables[i].setIndexBuffer(device, new Uint16Array());
+            //this.drawables[i].setVertexBuffer(device, new Float32Array(), new Float32Array());
+            //this.drawables[i].setIndexBuffer(device, new Uint16Array());
             break;
           case 'update':
             {
@@ -77,7 +78,7 @@ class Game {
       this.voxelWorker.postMessage({ stride: this.stride });
 
       this.stride /= 2;
-      if (this.stride < 1) this.stride = 32;
+      if (this.stride < 4) this.stride = 32;
 
       this.generating = false;
       console.log(`Generation complete in ${performance.now() - t0} milliseconds`);

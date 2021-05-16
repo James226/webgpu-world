@@ -10,6 +10,12 @@ let width: u32 = 33u;
 };
 [[binding(2), group(0)]] var<storage> voxelMaterials: [[access(read_write)]] VoxelMaterials;
 
+[[block]] struct CornerMaterials {
+  cornerMaterials : array<u32>;
+};
+
+[[binding(1), group(0)]] var<storage> cornerMaterials: [[access(read_write)]] CornerMaterials;
+
 [[block]] struct CornerIndex {
   cornerCount : u32;
   cornerIndexes : array<u32>;
@@ -125,14 +131,14 @@ fn Perlin(x1: f32, y1: f32, z1: f32) -> f32
 	let gi110: i32 = i32(perm.Perm[X + 1 + perm.Perm[Y + 1 + perm.Perm[Z]]] % 12);
 	let gi111: i32 = i32(perm.Perm[X + 1 + perm.Perm[Y + 1 + perm.Perm[Z + 1]]] % 12);
 	
-	let n000: f32 = Vec3Dot(Grad3[gi000], vec3<f32>(x, y, z));
-	let n100: f32 = Vec3Dot(Grad3[gi100], vec3<f32>(x - 1.0, y, z));
-	let n010: f32 = Vec3Dot(Grad3[gi010], vec3<f32>(x, y - 1.0, z));
-	let n110: f32 = Vec3Dot(Grad3[gi110], vec3<f32>(x - 1.0, y - 1.0, z));
-	let n001: f32 = Vec3Dot(Grad3[gi001], vec3<f32>(x, y, z - 1.0));
-	let n101: f32 = Vec3Dot(Grad3[gi101], vec3<f32>(x - 1.0, y, z - 1.0));
-	let n011: f32 = Vec3Dot(Grad3[gi011], vec3<f32>(x, y - 1.0, z - 1.0));
-	let n111: f32 = Vec3Dot(Grad3[gi111], vec3<f32>(x - 1.0, y - 1.0, z - 1.0));
+	let n000: f32 = dot(Grad3[gi000], vec3<f32>(x, y, z));
+	let n100: f32 = dot(Grad3[gi100], vec3<f32>(x - 1.0, y, z));
+	let n010: f32 = dot(Grad3[gi010], vec3<f32>(x, y - 1.0, z));
+	let n110: f32 = dot(Grad3[gi110], vec3<f32>(x - 1.0, y - 1.0, z));
+	let n001: f32 = dot(Grad3[gi001], vec3<f32>(x, y, z - 1.0));
+	let n101: f32 = dot(Grad3[gi101], vec3<f32>(x - 1.0, y, z - 1.0));
+	let n011: f32 = dot(Grad3[gi011], vec3<f32>(x, y - 1.0, z - 1.0));
+	let n111: f32 = dot(Grad3[gi111], vec3<f32>(x - 1.0, y - 1.0, z - 1.0));
 	
 	let u: f32 = f32(x * x * x * (x * (x * 6.0 - 15.0) + 10.0));
 	let v: f32 = f32(y * y * y * (y * (y * 6.0 - 15.0) + 10.0));
@@ -201,7 +207,7 @@ fn CLerp(a: f32, b: f32, t: f32) -> f32
 }
 
 fn getDensity(worldPosition: vec3<f32>) -> f32 {
-	var worldRadius: f32 = 100.0;
+	var worldRadius: f32 = 163840.0 / 4.0;
 	var world: vec3<f32> = worldPosition - vec3<f32>(0.0, 0.0, 0.0);
 	var worldDist: f32 = -worldRadius + length(world);
 
@@ -218,12 +224,14 @@ fn getDensity(worldPosition: vec3<f32>) -> f32 {
 	
 	let rockyBlend: f32 = 1.0;
 	
-	let mountainBlend: f32 = clamp(abs(FractalNoise1(0.5343, 2.2324, 0.68324, world)) * 4.0, 0.0, 1.0);
+	//let mountainBlend: f32 = clamp(abs(FractalNoise1(0.5343, 2.2324, 0.68324, world)) * 4.0, 0.0, 1.0);
+	let mountainBlend: f32 = 0.0;
 	
-	let mountain: f32 = CalculateNoiseValue(world, 0.07);
-	
+	//let mountain: f32 = CalculateNoiseValue(world, 0.07);
+	let mountain: f32 = 0.0;
 
 	var blob: f32 = CalculateNoiseValue(world, flatlandNoiseScale + ((rockyNoiseScale - flatlandNoiseScale) * rockyBlend));
+	//var blob: f32 = 0.0;
 	blob = CLerp(blob, (worldDist) * (flatlandYPercent + ((rockyYPercent - flatlandYPercent) * rockyBlend)),
 				flatlandLerpAmount + ((rockyLerpAmount - flatlandLerpAmount) * rockyBlend));
 	
@@ -557,7 +565,6 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) {
 		averageNormal = normalize(averageNormal / vec3<f32>(f32(edgeCount), f32(edgeCount), f32(edgeCount)));
 		
 		let com: vec3<f32> = vec3<f32>(pointaccum.x / pointaccum.w, pointaccum.y / pointaccum.w, pointaccum.z / pointaccum.w);
-	// 	vec4 solved_position = vec4(0, 0, 0, 0);
 		
 		let result: vec4<f32> = qef_solve();
 		var solved_position: vec3<f32> = result.xyz;
@@ -578,4 +585,18 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) {
 		voxels.voxels[trueIndex].numPoints = f32(edgeCount);
 		voxels.voxels[trueIndex].corners = f32(voxelMaterials.voxelMaterials[voxelIndex]);
 	}
+}
+
+[[stage(compute), workgroup_size(1)]]
+fn computeMaterials([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) {
+    let index: u32 = GlobalInvocationID.z * width * width + GlobalInvocationID.y * width + GlobalInvocationID.x;
+    let cornerPos: vec3<f32> = vec3<f32>(f32(GlobalInvocationID.x) * uniforms.stride, f32(GlobalInvocationID.y) * uniforms.stride, f32(GlobalInvocationID.z) * uniforms.stride);
+
+    let density: f32 = getDensity(cornerPos + uniforms.chunkPosition);
+
+		if (density < 0.0) {
+			cornerMaterials.cornerMaterials[index] = 1u;
+		} else {
+			cornerMaterials.cornerMaterials[index] = 0u;
+		}
 }
