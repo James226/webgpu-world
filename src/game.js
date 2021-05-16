@@ -41,7 +41,7 @@ class Game {
 
     this.generating = false;
 
-    this.stride = 2 << 13;
+    this.stride = 1 << 16;
     console.log(this.stride);
   }
 
@@ -78,7 +78,7 @@ class Game {
       this.voxelWorker.postMessage({ stride: this.stride });
 
       this.stride /= 2;
-      if (this.stride < 4) this.stride = 32;
+      if (this.stride < 1) this.stride = 32;
 
       this.generating = false;
       console.log(`Generation complete in ${performance.now() - t0} milliseconds`);

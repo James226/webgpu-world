@@ -192,6 +192,8 @@ float CLerp(float a, float b, float t)
 
 float getDensity(vec3 worldPosition) {
 
+return Box(worldPosition, vec3(0.5, 0.5, 0.5), vec3(10.9, 10.9, 10.9));
+
 	//return Box(worldPosition, vec3(5.0, 5.0, 5.0), vec3(2.0, 2.0, 2.0));
     //float box = Box(worldPosition, vec3(10.0, 20.0, 20.0), vec3(5.0, 5.0, 5.0));
 

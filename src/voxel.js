@@ -3,6 +3,11 @@ import ComputeMaterials from './compute-materials.wgsl';
 import ComputeCorners from './compute-corners.wgsl';
 import ComputePositions from './compute-positions.wgsl';
 import ComputeVoxels from './compute-voxels.wgsl';
+
+import GlslComputeMaterials from './glsl/compute-materials.glsl';
+import GlslComputeCorners from './glsl/compute-corners.glsl';
+import GlslComputePositions from './glsl/compute-positions.glsl';
+import GlslComputeVoxels from './glsl/compute-voxels.glsl';
 import Random from 'seedrandom';
 import ContourCells from './contouring';
 import ConstructOctree from './octree';
@@ -93,7 +98,7 @@ export default class Voxel {
     this.computeCornersPipeline = await device.createComputePipelineAsync({
       compute: {
         module: device.createShaderModule({
-          code: ComputeCorners
+          code: glslang.compileGLSL(GlslComputeCorners, 'compute')
         }),
         entryPoint: 'main',
       },
@@ -105,16 +110,30 @@ export default class Voxel {
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
 
-    const particleBuffers = device.createBuffer({
+    this.cornerMaterials = device.createBuffer({
       size: Uint32Array.BYTES_PER_ELEMENT * 33 * 33 * 33,
-      usage: GPUBufferUsage.STORAGE,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
       mappedAtCreation: false,
     });
 
-    const voxelMaterialsBuffer = device.createBuffer({
+
+
+    this.cornerMaterialsRead = device.createBuffer({
+      size: Uint32Array.BYTES_PER_ELEMENT * 33 * 33 * 33,
+      usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+    });
+
+    this.voxelMaterialsBuffer = device.createBuffer({
       size: Uint32Array.BYTES_PER_ELEMENT * 32 * 32 * 32,
-      usage: GPUBufferUsage.STORAGE,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
       mappedAtCreation: false,
+    });
+
+
+
+    this.voxelMaterialsBufferRead = device.createBuffer({
+      size: Uint32Array.BYTES_PER_ELEMENT * 32 * 32 * 32,
+      usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
     });
 
     this.cornerIndexBuffer = device.createBuffer({
@@ -170,13 +189,13 @@ export default class Voxel {
         {
           binding: 1,
           resource: {
-            buffer: particleBuffers
+            buffer: this.cornerMaterials
           },
         },
         {
           binding: 2,
           resource: {
-            buffer: voxelMaterialsBuffer
+            buffer: this.voxelMaterialsBuffer
           },
         },
         {
@@ -206,13 +225,13 @@ export default class Voxel {
         {
           binding: 1,
           resource: {
-            buffer: particleBuffers
+            buffer: this.cornerMaterials
           },
         },
         {
           binding: 2,
           resource: {
-            buffer: voxelMaterialsBuffer
+            buffer: this.voxelMaterialsBuffer
           },
         }
       ]
@@ -236,7 +255,7 @@ export default class Voxel {
         {
           binding: 2,
           resource: {
-            buffer: voxelMaterialsBuffer
+            buffer: this.voxelMaterialsBuffer
           },
         },
         {
@@ -277,13 +296,13 @@ export default class Voxel {
         {
           binding: 1,
           resource: {
-            buffer: particleBuffers
+            buffer: this.cornerMaterials
           },
         },
         {
           binding: 2,
           resource: {
-            buffer: voxelMaterialsBuffer
+            buffer: this.voxelMaterialsBuffer
           },
         },
         {
@@ -378,9 +397,44 @@ export default class Voxel {
         Uint32Array.BYTES_PER_ELEMENT
       );
 
+      copyEncoder.copyBufferToBuffer(
+        this.cornerMaterials,
+        0,
+        this.cornerMaterialsRead,
+        0,
+        Uint32Array.BYTES_PER_ELEMENT * 33 * 33 * 33
+      );
+
+      copyEncoder.copyBufferToBuffer(
+        this.voxelMaterialsBuffer,
+        0,
+        this.voxelMaterialsBufferRead,
+        0,
+        Uint32Array.BYTES_PER_ELEMENT * 32 * 32 * 32
+      );
+
       queue({
         items: [computeEncoder.finish(), copyEncoder.finish()],
         callback: () => {
+          // this.voxelMaterialsBufferRead.mapAsync(GPUMapMode.READ).then(() => {
+          //   const result = new Uint32Array(this.voxelMaterialsBufferRead.getMappedRange());
+          //   console.log(result);
+          //   let count = 0;
+          //   let count2 = 0;
+          //   const size = 32;
+          //   for (let x = 0; x < size; x++)
+          //   for (let y = 0; y < size; y++)
+          //   for (let z = 0; z < size; z++) {
+          //     count2++;
+          //     if (result[z * size * size + y * size + x] != 255 && result[z * size * size + y * size + x] != 0) {
+          //       console.log(x, y, z, result[z * size * size + y * size + x], count2);
+          //       count++;
+          //     }
+          //   }
+          //   console.log('Count', count);
+          //   this.voxelMaterialsBufferRead.unmap();
+          // });
+
           this.gpuReadBuffer.mapAsync(GPUMapMode.READ).then(() => {
 
             const arrayBuffer = this.gpuReadBuffer.getMappedRange();

@@ -30,7 +30,7 @@ import Voxel from './voxel';
     }
     generating = true;
     const { stride } = e.data;
-    const size = 2 << 13;
+    const size = 1 << 16;
     console.log(`World Size: ${size} (${size * 32})`);
     const chunkSize = 31;
     const worldSize =  Math.ceil(size / stride);

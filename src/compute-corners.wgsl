@@ -27,12 +27,13 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) {
   let index: u32 = GlobalInvocationID.z * 32u * 32u + GlobalInvocationID.y * 32u + GlobalInvocationID.x;
 
   let nodePos: vec3<u32> = vec3<u32>(GlobalInvocationID.x, GlobalInvocationID.y, GlobalInvocationID.z);
-
   var corners: u32 = 0u;
+
   var j: u32 = 0u;
   loop {
     if (j >= 8u) { break; }
-    let cornerPos: vec3<u32> = nodePos + CHILD_MIN_OFFSETS[j];
+
+    let cornerPos: vec3<u32> = vec3<u32>(GlobalInvocationID.x + CHILD_MIN_OFFSETS[j].x, GlobalInvocationID.y + CHILD_MIN_OFFSETS[j].y, GlobalInvocationID.z + CHILD_MIN_OFFSETS[j].z);
     let material: u32 = cornerMaterials.cornerMaterials[cornerPos.z * 33u * 33u + cornerPos.y * 33u + cornerPos.x];
     corners = corners | (material << j);
 

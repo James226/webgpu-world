@@ -207,7 +207,7 @@ fn CLerp(a: f32, b: f32, t: f32) -> f32
 }
 
 fn getDensity(worldPosition: vec3<f32>) -> f32 {
-	var worldRadius: f32 = 163840.0 / 4.0;
+	var worldRadius: f32 = 930000.0;
 	var world: vec3<f32> = worldPosition - vec3<f32>(0.0, 0.0, 0.0);
 	var worldDist: f32 = -worldRadius + length(world);
 
@@ -237,7 +237,7 @@ fn getDensity(worldPosition: vec3<f32>) -> f32 {
 	
 	var result: f32 = ((worldDist) / worldRadius) + CLerp(mountain, blob, minMountainMixLerpAmount + ((maxMountainMixLerpAmount - minMountainMixLerpAmount) * mountainBlend));
 	return result;
-	//return max(-result, max(-Sphere(worldPosition, vec3(20.0, 48.0, 48.0), 10.0), min(result, Box(worldPosition, vec3(0.0, 0.0, 0.0), vec3(300.0, 300.0, 300.0)))));
+	// //return max(-result, max(-Sphere(worldPosition, vec3(20.0, 48.0, 48.0), 10.0), min(result, Box(worldPosition, vec3(0.0, 0.0, 0.0), vec3(300.0, 300.0, 300.0)))));
 }
 
 fn ApproximateZeroCrossingPosition(p0: vec3<f32>, p1: vec3<f32>) -> vec3<f32>
@@ -477,10 +477,10 @@ fn qef_add(n: vec4<f32>, p: vec4<f32>)
 	pointaccum.w = pointaccum.w +1.0;
 }
 
-fn qef_calc_error(A: array<f32, 6>, x: vec4<f32>, b: vec4<f32>) -> f32
+fn qef_calc_error(x: vec4<f32>) -> f32
 {
 	var tmp: vec4<f32> = svd_vmul_sym(x);
-	tmp = b - tmp;
+	tmp = Atb - tmp;
 	
 	return dot(tmp, tmp);
 }
@@ -494,7 +494,7 @@ fn qef_solve() -> vec4<f32>
 	
 	let x: vec4<f32> = svd_solve_ATA_Atb(A_mp);
 	
-	let error: f32 = qef_calc_error(ATA, x, Atb);
+	let error: f32 = qef_calc_error(x);
 	let r: vec4<f32> = x + masspoint;
 	
 	return vec4<f32>(r.x, r.y, r.z, error);
