@@ -5,7 +5,7 @@ export default class Controller {
     this.keyboard = keyboard;
 
     this.viewMatrix = mat4.create();
-    this.position = vec3.fromValues(0, 0, -228);
+    this.position = vec3.fromValues(0, -200000, 0.0);
     this.rotation = vec3.fromValues(0, 0, 0);
   }
 

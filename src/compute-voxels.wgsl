@@ -68,18 +68,20 @@ fn Box(worldPosition: vec3<f32>, origin: vec3<f32>, halfDimensions: vec3<f32>) -
 
 	let d: vec3<f32> = vec3<f32>(abs(pos.x), abs(pos.y), abs(pos.z)) - halfDimensions;
 	let m: f32 = max(d.x, max(d.y, d.z));
-	return min(m, length(max(d, vec3<f32>(0.0, 0.0, 0.0))));
+	return clamp(min(m, length(max(d, vec3<f32>(0.0, 0.0, 0.0)))), -100.0, 100.0);
 }
 
-fn Torus(p: vec3<f32>, t: vec3<f32>) -> f32
+fn Torus(worldPosition: vec3<f32>, origin: vec3<f32>, t: vec3<f32>) -> f32
 {
+	let p: vec3<f32> = worldPosition - origin;
+
   let q: vec2<f32> = vec2<f32>(length(p.xz)-t.x,p.y);
   return length(q)-t.y;
 }
 
 fn Sphere(worldPosition: vec3<f32>, origin: vec3<f32>, radius: f32) -> f32
 {
-	return length(worldPosition - origin) - radius;
+	return clamp(length(worldPosition - origin) - radius, -100.0, 100.0);
 }
 
 fn Vec3Dot(a: vec3<f32>, b: vec3<f32>) -> f32
@@ -204,76 +206,6 @@ fn CalculateNoiseValue(pos: vec3<f32>, scale: f32) -> f32
 fn CLerp(a: f32, b: f32, t: f32) -> f32
 {
 	return (1.0 - t) * a + t * b;
-}
-
-fn getDensity(worldPosition: vec3<f32>) -> f32 {
-	var worldRadius: f32 = 930000.0;
-	var world: vec3<f32> = worldPosition - vec3<f32>(0.0, 0.0, 0.0);
-	var worldDist: f32 = -worldRadius + length(world);
-
-	let flatlandNoiseScale: f32 = 3.0;
-	let flatlandLerpAmount: f32 = 0.07;
-	let flatlandYPercent: f32 = 1.2;
-
-	let rockyNoiseScale: f32 = 3.5;
-	let rockyLerpAmount: f32 = 0.05;
-	let rockyYPercent: f32 = 0.7;
-	
-	let maxMountainMixLerpAmount: f32 = 0.075;
-	let minMountainMixLerpAmount: f32 = 1.0;
-	
-	let rockyBlend: f32 = 1.0;
-	
-	//let mountainBlend: f32 = clamp(abs(FractalNoise1(0.5343, 2.2324, 0.68324, world)) * 4.0, 0.0, 1.0);
-	let mountainBlend: f32 = 0.0;
-	
-	//let mountain: f32 = CalculateNoiseValue(world, 0.07);
-	let mountain: f32 = 0.0;
-
-	var blob: f32 = CalculateNoiseValue(world, flatlandNoiseScale + ((rockyNoiseScale - flatlandNoiseScale) * rockyBlend));
-	//var blob: f32 = 0.0;
-	blob = CLerp(blob, (worldDist) * (flatlandYPercent + ((rockyYPercent - flatlandYPercent) * rockyBlend)),
-				flatlandLerpAmount + ((rockyLerpAmount - flatlandLerpAmount) * rockyBlend));
-	
-	var result: f32 = ((worldDist) / worldRadius) + CLerp(mountain, blob, minMountainMixLerpAmount + ((maxMountainMixLerpAmount - minMountainMixLerpAmount) * mountainBlend));
-	return result;
-	// //return max(-result, max(-Sphere(worldPosition, vec3(20.0, 48.0, 48.0), 10.0), min(result, Box(worldPosition, vec3(0.0, 0.0, 0.0), vec3(300.0, 300.0, 300.0)))));
-}
-
-fn ApproximateZeroCrossingPosition(p0: vec3<f32>, p1: vec3<f32>) -> vec3<f32>
-{
-	var minValue: f32 = 100000.0;
-	var t: f32 = 0.0;
-	var currentT: f32 = 0.0;
-	let steps: f32 = 8.0;
-	let increment: f32 = 1.0 / steps;
-	loop {
-		if (currentT > 1.0) { break; }
-
-		let p: vec3<f32> = p0 + ((p1 - p0) * currentT);
-		let density: f32 = abs(getDensity(p));
-		if (density < minValue)
-		{
-			minValue = density;
-			t = currentT;
-		}
-
-		continuing {
-			currentT = currentT + increment;
-		}
-	}
-
-	return p0 + ((p1 - p0) * t);
-}
-
-fn CalculateSurfaceNormal(p: vec3<f32>) -> vec3<f32>
-{
-	let H: f32 = 0.001;
-	let dx: f32 = getDensity(p + vec3<f32>(H, 0.0, 0.0)) - getDensity(p - vec3<f32>(H, 0.0, 0.0));
-	let dy: f32 = getDensity(p + vec3<f32>(0.0, H, 0.0)) - getDensity(p - vec3<f32>(0.0, H, 0.0));
-	let dz: f32 = getDensity(p + vec3<f32>(0.0, 0.0, H)) - getDensity(p - vec3<f32>(0.0, 0.0, H));
-
-	return normalize(vec3<f32>(dx, dy, dz));
 }
 
 // SVD
@@ -501,6 +433,79 @@ fn qef_solve() -> vec4<f32>
 }
 
 
+fn getDensity(worldPosition: vec3<f32>) -> f32 {
+	var floor: f32 = 100.0;
+	// if (worldPosition.y < 0.0) {
+	// 	floor = -100.0;
+	// }
+	//return min(Box(worldPosition, vec3<f32>(20000.0, 0.0, 0.0), vec3<f32>(10000.0, 10000.0, 10000.0)), Sphere(worldPosition, vec3<f32>(0.0, 0.0, 0.0), 10000.0));
+	var worldRadius: f32 = 200000.0;
+	var world: vec3<f32> = worldPosition - vec3<f32>(0.0, 0.0, 0.0);
+	var worldDist: f32 = clamp(-worldRadius + length(world), -1000.0, 1000.0);
+
+	let flatlandNoiseScale: f32 = 3.0;
+	let flatlandLerpAmount: f32 = 0.07;
+	let flatlandYPercent: f32 = 1.2;
+
+	let rockyNoiseScale: f32 = 3.5;
+	let rockyLerpAmount: f32 = 0.05;
+	let rockyYPercent: f32 = 0.7;
+	
+	let maxMountainMixLerpAmount: f32 = 0.075;
+	let minMountainMixLerpAmount: f32 = 1.0;
+	
+	let rockyBlend: f32 = 1.0;
+	
+	//let mountainBlend: f32 = clamp(abs(FractalNoise1(0.5343, 2.2324, 0.68324, world)) * 4.0, 0.0, 1.0);
+	let mountainBlend: f32 = 0.0;
+	
+	//let mountain: f32 = CalculateNoiseValue(world, 0.07);
+	let mountain: f32 = 0.0;
+
+	var blob: f32 = CalculateNoiseValue(world, flatlandNoiseScale + ((rockyNoiseScale - flatlandNoiseScale) * rockyBlend));
+	//var blob: f32 = 0.0;
+	blob = CLerp(blob, (worldDist) * (flatlandYPercent + ((rockyYPercent - flatlandYPercent) * rockyBlend)),
+				flatlandLerpAmount + ((rockyLerpAmount - flatlandLerpAmount) * rockyBlend));
+	
+	var result: f32 = ((worldDist) / worldRadius) + CLerp(mountain, blob, minMountainMixLerpAmount + ((maxMountainMixLerpAmount - minMountainMixLerpAmount) * mountainBlend));
+	return result;
+}
+
+fn ApproximateZeroCrossingPosition(p0: vec3<f32>, p1: vec3<f32>) -> vec3<f32>
+{
+	var minValue: f32 = 100000.0;
+	var t: f32 = 0.0;
+	var currentT: f32 = 0.0;
+	let steps: f32 = 8.0;
+	let increment: f32 = 1.0 / steps;
+	loop {
+		if (currentT > 1.0) { break; }
+
+		let p: vec3<f32> = p0 + ((p1 - p0) * currentT);
+		let density: f32 = abs(getDensity(p));
+		if (density < minValue)
+		{
+			minValue = density;
+			t = currentT;
+		}
+
+		continuing {
+			currentT = currentT + increment;
+		}
+	}
+
+	return p0 + ((p1 - p0) * t);
+}
+
+fn CalculateSurfaceNormal(p: vec3<f32>) -> vec3<f32>
+{
+	let H: f32 = 0.1;
+	let dx: f32 = getDensity(p + vec3<f32>(H, 0.0, 0.0)) - getDensity(p - vec3<f32>(H, 0.0, 0.0));
+	let dy: f32 = getDensity(p + vec3<f32>(0.0, H, 0.0)) - getDensity(p - vec3<f32>(0.0, H, 0.0));
+	let dz: f32 = getDensity(p + vec3<f32>(0.0, 0.0, H)) - getDensity(p - vec3<f32>(0.0, 0.0, H));
+
+	return normalize(vec3<f32>(dx, dy, dz));
+}
 
 [[stage(compute), workgroup_size(128)]]
 fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) {
@@ -600,3 +605,4 @@ fn computeMaterials([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<
 			cornerMaterials.cornerMaterials[index] = 0u;
 		}
 }
+

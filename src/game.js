@@ -41,7 +41,7 @@ class Game {
 
     this.generating = false;
 
-    this.stride = 1 << 16;
+    this.stride = 1 << 14;
     console.log(this.stride);
   }
 

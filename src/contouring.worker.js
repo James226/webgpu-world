@@ -30,7 +30,7 @@ import Voxel from './voxel';
     }
     generating = true;
     const { stride } = e.data;
-    const size = 1 << 16;
+    const size = 1 << 14;
     console.log(`World Size: ${size} (${size * 32})`);
     const chunkSize = 31;
     const worldSize =  Math.ceil(size / stride);
@@ -60,7 +60,7 @@ import Voxel from './voxel';
 
       // const { vertices, normals, indices } = await promise;
 
-      postMessage(({ type: 'update', i, ix: x, iy: y, iz: z, x: 0, y: 0, z: -halfWorldSize, vertices: vertices.buffer, normals: normals.buffer, indices: indices.buffer }), [vertices.buffer, normals.buffer, indices.buffer])
+      postMessage(({ type: 'update', i, ix: x, iy: y, iz: z, x: 0, y: 0, z: 0, vertices: vertices.buffer, normals: normals.buffer, indices: indices.buffer }), [vertices.buffer, normals.buffer, indices.buffer])
       
     }
 

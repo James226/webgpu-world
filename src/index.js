@@ -12,7 +12,7 @@ async function init(canvas) {
 
   const aspect = Math.abs(canvas.width / canvas.height);
   const projectionMatrix = mat4.create();
-  mat4.perspective(projectionMatrix, (2 * Math.PI) / 5, aspect, 1, (2 << 15) * 32);
+  mat4.perspective(projectionMatrix, (2 * Math.PI) / 5, aspect, 1, (1 << 20) * 32);
 
   const swapChainFormat = 'bgra8unorm';
 
@@ -39,7 +39,7 @@ async function init(canvas) {
     canvas.height = window.innerHeight;
 
     const aspect = Math.abs(canvas.width / canvas.height);
-    mat4.perspective(projectionMatrix, (2 * Math.PI) / 5, aspect, 1, (2 << 15) * 32);
+    mat4.perspective(projectionMatrix, (2 * Math.PI) / 5, aspect, 1, (1 << 16) * 32);
 
     depthTexture = device.createTexture({
       size: { width: canvas.width, height: canvas.height },
