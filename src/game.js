@@ -1,9 +1,9 @@
 import { vec3, mat4 } from 'gl-matrix';
-import Drawable from "./drawable";
 import ContouringWorker from './contouring.worker';
 import Controller from './controller';
 import Keyboard from './keyboard';
 import VoxelCollection from './voxel-collection';
+import Physics from './physics';
 
 class Game {
   async init(device, queue, glslang) {
@@ -18,11 +18,15 @@ class Game {
 
         document.getElementById('loading').style.display = 'none';
         this.loaded = true;
+        this.generate(device);
       }
     }
 
     this.keyboard = new Keyboard();
     this.keyboard.init();
+
+    this.physics = new Physics();
+    await this.physics.init(device);
 
     this.controller = new Controller(this.keyboard);
     this.controller.init(device, queue, glslang);
@@ -30,14 +34,7 @@ class Game {
     this.drawables = [];
 
     this.collection = new VoxelCollection();
-    this.collection.init(device, queue, glslang);
-
-    // for (let x = 0; x < worldSize; x++)
-    // for (let y = 0; y < worldSize; y++)
-    // for (let z = 0; z < worldSize; z++) {
-    //   this.drawables[x + (y * worldSize) + (z * worldSize * worldSize)] = new Drawable(vec3.create());
-    //   this.drawables[x + (y * worldSize) + (z * worldSize * worldSize)].init(device, queue, glslang);
-    // }
+    await this.collection.init(device, queue, glslang);
 
     this.generating = false;
 
@@ -81,14 +78,19 @@ class Game {
       if (this.stride < 1) this.stride = 32;
 
       this.generating = false;
+
       console.log(`Generation complete in ${performance.now() - t0} milliseconds`);
   }
 
-  update(device, projectionMatrix, timestamp) {
+  update(device, projectionMatrix, timestamp, queue) {
     if (this.keyboard.keypress('g')) {
       this.generate(device);
     }
 
+    this.physics.velocity = this.controller.velocity;
+    this.physics.update(device, q => queue.push(q));
+
+    this.controller.position = this.physics.position;
     this.controller.update(device, projectionMatrix, timestamp);
 
     const viewMatrix = this.controller.viewMatrix;

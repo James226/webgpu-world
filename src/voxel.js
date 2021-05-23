@@ -175,6 +175,13 @@ export default class Voxel {
       mappedAtCreation: false,
     });
 
+    
+    this.actorsBuffer = device.createBuffer({
+      size: Float32Array.BYTES_PER_ELEMENT * 8,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
+      mappedAtCreation: false,
+    });
+
     console.log('20', performance.now() - start);
 
     this.computeBindGroup = device.createBindGroup({
@@ -214,6 +221,12 @@ export default class Voxel {
           binding: 5,
           resource: {
             buffer: this.uniformBuffer
+          },
+        },
+        {
+          binding: 6,
+          resource: {
+            buffer: this.actorsBuffer
           },
         }
       ]
@@ -322,6 +335,12 @@ export default class Voxel {
           resource: {
             buffer: this.uniformBuffer
           },
+        },
+        {
+          binding: 6,
+          resource: {
+            buffer: this.actorsBuffer
+          },
         }
       ]
     });
@@ -416,24 +435,23 @@ export default class Voxel {
       queue({
         items: [computeEncoder.finish(), copyEncoder.finish()],
         callback: () => {
-          this.voxelMaterialsBufferRead.mapAsync(GPUMapMode.READ).then(() => {
-            const result = new Uint32Array(this.voxelMaterialsBufferRead.getMappedRange());
-            console.log(result);
-            let count = 0;
-            let count2 = 0;
-            const size = 32;
-            for (let x = 0; x < size; x++)
-            for (let y = 0; y < size; y++)
-            for (let z = 0; z < size; z++) {
-              count2++;
-              if (result[z * size * size + y * size + x] != 255 && result[z * size * size + y * size + x] != 0) {
-                console.log(x, y, z, result[z * size * size + y * size + x], count2);
-                count++;
-              }
-            }
-            console.log('Count', count);
-            this.voxelMaterialsBufferRead.unmap();
-          });
+          // this.voxelMaterialsBufferRead.mapAsync(GPUMapMode.READ).then(() => {
+          //   const result = new Uint32Array(this.voxelMaterialsBufferRead.getMappedRange());
+          //   let count = 0;
+          //   let count2 = 0;
+          //   const size = 32;
+          //   for (let x = 0; x < size; x++)
+          //   for (let y = 0; y < size; y++)
+          //   for (let z = 0; z < size; z++) {
+          //     count2++;
+          //     if (result[z * size * size + y * size + x] != 255 && result[z * size * size + y * size + x] != 0) {
+          //       console.log(x, y, z, result[z * size * size + y * size + x], count2);
+          //       count++;
+          //     }
+          //   }
+          //   console.log('Count', count);
+          //   this.voxelMaterialsBufferRead.unmap();
+          // });
 
           this.gpuReadBuffer.mapAsync(GPUMapMode.READ).then(() => {
 

@@ -12,8 +12,105 @@ export default class VoxelCollection {
   }
 
 
-  init(device, queue, glslang) {
+  async init(device, queue, glslang) {
+
+    const img = document.createElement('img');
+    img.src = 'grass.jpg';
+    await img.decode();
+    const imageBitmap = await createImageBitmap(img);
+
+    const cubeTexture = device.createTexture({
+      size: [imageBitmap.width, imageBitmap.height, 1],
+      format: 'rgba8unorm',
+      usage: GPUTextureUsage.SAMPLED | GPUTextureUsage.COPY_DST,
+    });
+    device.queue.copyImageBitmapToTexture(
+      { imageBitmap },
+      { texture: cubeTexture },
+      [imageBitmap.width, imageBitmap.height, 1]
+    );
+
+    const sampler = device.createSampler({
+      magFilter: 'linear',
+      minFilter: 'linear',
+      addressModeU: 'repeat',
+      addressModeV: 'repeat',
+      addressModeW: 'repeat',
+    });
+
+
+    const uniformBufferSize = 4 * 16; // 4x4 matrix
+  const uniformBuffer = device.createBuffer({
+    size: uniformBufferSize,
+    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+  });
+ 
+  const uniformLayout = device.createBindGroupLayout({
+    entries: [
+      {
+        // Transform
+        binding: 0,
+        visibility: GPUShaderStage.VERTEX,
+        buffer: {
+          type: 'uniform',
+        },
+      },
+// '      {
+//         // Sampler
+//         binding: 0,
+//         visibility: GPUShaderStage.FRAGMENT,
+//         sampler: {
+//           type: 'filtering',
+//         },
+//       },'
+      // {
+      //   // Texture view
+      //   binding: 2,
+      //   visibility: GPUShaderStage.FRAGMENT,
+      //   texture: {
+      //     sampleType: 'float',
+      //   },
+      // },
+    ],
+  });
+
+
+
+    const bindGroupLayout = device.createBindGroupLayout({
+      entries: [
+        // {
+        //   // Transform
+        //   binding: 0,
+        //   visibility: GPUShaderStage.VERTEX,
+        //   buffer: {
+        //     type: 'uniform',
+        //   },
+        // },
+        {
+          // Sampler
+          binding: 0,
+          visibility: GPUShaderStage.FRAGMENT,
+          sampler: {
+            type: 'filtering',
+          },
+        },
+        {
+          // Texture view
+          binding: 1,
+          visibility: GPUShaderStage.FRAGMENT,
+          texture: {
+            sampleType: 'float',
+          },
+        },
+      ],
+    });
+    const pipelineLayout = device.createPipelineLayout({
+      bindGroupLayouts: [uniformLayout, bindGroupLayout],
+    });
+
     this.pipeline = device.createRenderPipeline({
+      layout: pipelineLayout,
+
       vertex: {
         module:
           device.createShaderModule({
@@ -63,7 +160,31 @@ export default class VoxelCollection {
         format: 'depth24plus-stencil8',
       },
     });
+
+    
+
+    this.uniformBindGroup = device.createBindGroup({
+      layout: this.pipeline.getBindGroupLayout(1),
+      entries: [
+        // {
+        //   binding: 0,
+        //   resource: {
+        //     buffer: uniformBuffer,
+        //   },
+        // },
+        {
+          binding: 0,
+          resource: sampler,
+        },
+        {
+          binding: 1,
+          resource: cubeTexture.createView(),
+        },
+      ],
+    });
+  
   }
+  
 
   set(device, key, position, vertices, normals, indices) {
     console.log(position);
@@ -111,6 +232,7 @@ export default class VoxelCollection {
 
   draw(passEncoder) {
     passEncoder.setPipeline(this.pipeline);
+    passEncoder.setBindGroup(1, this.uniformBindGroup);
     for (const value of Object.values(this.objects)) {
       value.draw(passEncoder)
     }

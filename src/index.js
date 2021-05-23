@@ -75,7 +75,7 @@ async function init(canvas) {
       }
     };
 
-    game.update(device, projectionMatrix, delta);
+    game.update(device, projectionMatrix, delta, queue);
 
     const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
     game.draw(passEncoder);
@@ -83,20 +83,20 @@ async function init(canvas) {
 
     const item = queue.shift();
 
-    // device.queue.onSubmittedWorkDone().then(e => {
-    //   if (item) {
-    //     item.callback();
-    //   }
-    // })
+    device.queue.onSubmittedWorkDone().then(e => {
+      if (item) {
+        item.callback();
+      }
+    })
     
     if (item) {
       device.queue.submit([commandEncoder.finish(), ...item.items]);
     } else {
       device.queue.submit([commandEncoder.finish()]);
     }
-    if (item) {
-      item.callback();
-    }
+    // if (item) {
+    //   item.callback();
+    // }
     lastTimestamp = timestamp;
   }
 

@@ -22,6 +22,7 @@ layout(location = 0) in vec4 position;
 layout(location = 1) in vec4 color;
 
 layout(location = 0) out vec4 fragColor;
+layout(location = 1) out vec2 fragUV;
 
 void main() {
   Lights light;
@@ -32,5 +33,6 @@ void main() {
 
   vec3 result = vec3(0.2, 0.2, 0.2) + light.diffuse * lambert(color.rgb, light.position);
 
+  fragUV = position.xz;
   fragColor = vec4(result.rgb, 1.0);
 }

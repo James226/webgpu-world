@@ -41,6 +41,16 @@ struct GPUVOX
 };
 [[binding(5), group(0)]] var<uniform> uniforms : UniformBufferObject;
 
+struct Actor {
+  position: vec3<f32>;
+  velocity: vec3<f32>;
+};
+
+[[block]] struct Physics {
+  actors: array<Actor>;
+};
+[[binding(6), group(0)]] var<storage> physics : [[access(read_write)]] Physics;
+
 
 let CHILD_MIN_OFFSETS: array<vec3<u32>, 8> = array<vec3<u32>, 8>
 (
@@ -443,11 +453,11 @@ fn getDensity(worldPosition: vec3<f32>) -> f32 {
 	var world: vec3<f32> = worldPosition - vec3<f32>(0.0, 0.0, 0.0);
 	var worldDist: f32 = clamp(-worldRadius + length(world), -1000.0, 1000.0);
 
-	let flatlandNoiseScale: f32 = 3.0;
+	let flatlandNoiseScale: f32 = 300.0;
 	let flatlandLerpAmount: f32 = 0.07;
 	let flatlandYPercent: f32 = 1.2;
 
-	let rockyNoiseScale: f32 = 3.5;
+	let rockyNoiseScale: f32 = 300.0;
 	let rockyLerpAmount: f32 = 0.05;
 	let rockyYPercent: f32 = 0.7;
 	
@@ -606,3 +616,23 @@ fn computeMaterials([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<
 		}
 }
 
+[[stage(compute), workgroup_size(1)]]
+fn computePhysics([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) {
+	let actor: u32 = GlobalInvocationID.x;
+
+	if (getDensity(physics.actors[actor].position) < 0.0) {
+		physics.actors[actor].position.y = physics.actors[actor].position.y - 10.0;
+	}
+
+	let gravity: vec3<f32> = normalize(vec3<f32>() - physics.actors[actor].position) * 100.0;
+
+	let velocity: vec3<f32> = physics.actors[actor].velocity + gravity;
+	let position: vec3<f32> = physics.actors[actor].position + velocity;
+
+	let density: f32 = getDensity(position);
+	if (density > 0.0) {
+ 		physics.actors[actor].position = position;
+	} else {
+		physics.actors[actor].position = physics.actors[actor].position + physics.actors[actor].velocity;
+	}
+}
