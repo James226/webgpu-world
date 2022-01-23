@@ -1,19 +1,17 @@
-
-
-[[block]] struct VoxelMaterials {
+struct VoxelMaterials {
   voxelMaterials : array<u32>;
 };
-[[binding(2), group(0)]] var<storage> voxelMaterials: [[access(read)]] VoxelMaterials;
+@binding(2) @group(0) var<storage, read> voxelMaterials: VoxelMaterials;
 
-[[block]] struct CornerIndex {
+struct CornerIndex {
   cornerCount : u32;
   cornerIndexes : array<u32>;
 };
-[[binding(3), group(0)]] var<storage> cornerIndex: [[access(read_write)]] CornerIndex;
+@binding(3) @group(0) var<storage, read_write> cornerIndex: CornerIndex;
 
 
-[[stage(compute), workgroup_size(1)]]
-fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) {
+@stage(compute) @workgroup_size(1)
+fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 	var position: u32 = 0u;
 
 	var i : u32 = 0u;

@@ -16,8 +16,8 @@ async function init(canvas) {
 
   const swapChainFormat = 'bgra8unorm';
 
-  const context = canvas.getContext('gpupresent');
-  const swapChain = context.configureSwapChain({
+  const context = canvas.getContext('webgpu');
+  const swapChain = context.configure({
     device,
     format: swapChainFormat,
   });
@@ -55,7 +55,7 @@ async function init(canvas) {
     const delta = lastTimestamp - timestamp;
 
     const commandEncoder = device.createCommandEncoder();
-    const textureView = swapChain.getCurrentTexture().createView();
+    const textureView = context.getCurrentTexture().createView();
 
     const renderPassDescriptor = {
       colorAttachments: [

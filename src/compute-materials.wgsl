@@ -2,22 +2,22 @@ let octreeSize: u32 = 32u;
 
 let width: u32 = 33u;
 
-[[block]] struct Permutations {
+struct Permutations {
   Perm : array<i32, 512>;
 };
-[[binding(0), group(0)]] var<storage> perm : [[access(read)]] Permutations;
+@binding(0) @group(0) var<storage, read> perm : Permutations;
 
-[[block]] struct CornerMaterials {
+struct CornerMaterials {
   cornerMaterials : array<u32>;
 };
 
-[[binding(1), group(0)]] var<storage> cornerMaterials: [[access(read_write)]] CornerMaterials;
+@binding(1) @group(0) var<storage, read_write> cornerMaterials: CornerMaterials;
 
-[[block]] struct UniformBufferObject {
+struct UniformBufferObject {
   chunkPosition : vec3<f32>;
   stride : f32;
 };
-[[binding(5), group(0)]] var<uniform> uniforms : UniformBufferObject;
+@binding(5) @group(0) var<uniform> uniforms : UniformBufferObject;
 
 fn Box(worldPosition: vec3<f32>, origin: vec3<f32>, halfDimensions: vec3<f32>) -> f32
 {
@@ -196,8 +196,8 @@ fn getDensity(worldPosition: vec3<f32>) -> f32 {
 	//return max(-result, max(-Sphere(worldPosition, vec3(20.0, 48.0, 48.0), 10.0), min(result, Box(worldPosition, vec3(0.0, 0.0, 0.0), vec3(300.0, 300.0, 300.0)))));
 }
 
-[[stage(compute), workgroup_size(1)]]
-fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) {
+@stage(compute) @workgroup_size(1)
+fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
     let index: u32 = GlobalInvocationID.z * width * width + GlobalInvocationID.y * width + GlobalInvocationID.x;
     let cornerPos: vec3<f32> = vec3<f32>(f32(GlobalInvocationID.x) * uniforms.stride, f32(GlobalInvocationID.y) * uniforms.stride, f32(GlobalInvocationID.z) * uniforms.stride);
 

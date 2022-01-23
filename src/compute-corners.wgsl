@@ -1,14 +1,14 @@
 let OctreeSize: u32 = 32u;
 
-[[block]] struct CornerMaterials {
+struct CornerMaterials {
   cornerMaterials : array<u32>;
 };
-[[binding(1), group(0)]] var<storage> cornerMaterials: [[access(read)]] CornerMaterials;
+@binding(1) @group(0) var<storage, read> cornerMaterials: CornerMaterials;
 
-[[block]] struct VoxelMaterials {
+struct VoxelMaterials {
   voxelMaterials : array<u32>;
 };
-[[binding(2), group(0)]] var<storage> voxelMaterials: [[access(read_write)]] VoxelMaterials;
+@binding(2) @group(0) var<storage, read_write> voxelMaterials: VoxelMaterials;
 
 let CHILD_MIN_OFFSETS: array<vec3<u32>, 8> = array<vec3<u32>, 8>
 (
@@ -22,8 +22,8 @@ let CHILD_MIN_OFFSETS: array<vec3<u32>, 8> = array<vec3<u32>, 8>
   vec3<u32>(1u, 1u, 1u)
 );
 
-[[stage(compute), workgroup_size(1)]]
-fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) {
+@stage(compute) @workgroup_size(1)
+fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
   let index: u32 = GlobalInvocationID.z * 32u * 32u + GlobalInvocationID.y * 32u + GlobalInvocationID.x;
 
   let nodePos: vec3<u32> = vec3<u32>(GlobalInvocationID.x, GlobalInvocationID.y, GlobalInvocationID.z);

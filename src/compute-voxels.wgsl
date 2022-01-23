@@ -1,26 +1,30 @@
 let width: u32 = 33u;
 
-[[block]] struct Permutations {
+struct Permutations {
   Perm : array<i32, 512>;
-};
-[[binding(0), group(0)]] var<storage> perm : [[access(read)]] Permutations;
+}
+@binding(0) @group(0)
+var<storage, read> perm : Permutations;
 
-[[block]] struct VoxelMaterials {
-  voxelMaterials : array<u32>;
-};
-[[binding(2), group(0)]] var<storage> voxelMaterials: [[access(read_write)]] VoxelMaterials;
-
-[[block]] struct CornerMaterials {
+struct CornerMaterials {
   cornerMaterials : array<u32>;
-};
+}
 
-[[binding(1), group(0)]] var<storage> cornerMaterials: [[access(read_write)]] CornerMaterials;
+@binding(1) @group(0)
+var<storage, read_write> cornerMaterials: CornerMaterials;
 
-[[block]] struct CornerIndex {
+struct VoxelMaterials {
+  voxelMaterials : array<u32>;
+}
+@binding(2) @group(0)
+var<storage, read_write> voxelMaterials: VoxelMaterials;
+
+struct CornerIndex {
   cornerCount : u32;
   cornerIndexes : array<u32>;
-};
-[[binding(3), group(0)]] var<storage> cornerIndex: [[access(read_write)]] CornerIndex;
+}
+@binding(3) @group(0)
+var<storage, read_write> cornerIndex: CornerIndex;
 
 struct GPUVOX
 {
@@ -30,26 +34,29 @@ struct GPUVOX
 	avgNormal: vec3<f32>;
 	numPoints: f32;
 };
-[[block]] struct GPUVOXS {
+struct GPUVOXS {
   voxels : array<GPUVOX>;
-};
-[[binding(4), group(0)]] var<storage> voxels: [[access(read_write)]] GPUVOXS;
+}
+@binding(4) @group(0)
+var<storage, read_write> voxels: GPUVOXS;
 
-[[block]] struct UniformBufferObject {
+struct UniformBufferObject {
   chunkPosition : vec3<f32>;
   stride : f32;
-};
-[[binding(5), group(0)]] var<uniform> uniforms : UniformBufferObject;
+}
+@binding(5) @group(0)
+var<uniform> uniforms : UniformBufferObject;
 
 struct Actor {
   position: vec3<f32>;
   velocity: vec3<f32>;
-};
+}
 
-[[block]] struct Physics {
+struct Physics {
   actors: array<Actor>;
-};
-[[binding(6), group(0)]] var<storage> physics : [[access(read_write)]] Physics;
+}
+@binding(6) @group(0)
+var<storage, read_write> physics : Physics;
 
 
 let CHILD_MIN_OFFSETS: array<vec3<u32>, 8> = array<vec3<u32>, 8>
@@ -517,8 +524,8 @@ fn CalculateSurfaceNormal(p: vec3<f32>) -> vec3<f32>
 	return normalize(vec3<f32>(dx, dy, dz));
 }
 
-[[stage(compute), workgroup_size(128)]]
-fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) {
+@stage(compute) @workgroup_size(128)
+fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 	let trueIndex: u32 = GlobalInvocationID.x;
 
 	if (trueIndex < cornerIndex.cornerCount)
@@ -602,8 +609,8 @@ fn main([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) {
 	}
 }
 
-[[stage(compute), workgroup_size(1)]]
-fn computeMaterials([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) {
+@stage(compute) @workgroup_size(1)
+fn computeMaterials(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
     let index: u32 = GlobalInvocationID.z * width * width + GlobalInvocationID.y * width + GlobalInvocationID.x;
     let cornerPos: vec3<f32> = vec3<f32>(f32(GlobalInvocationID.x) * uniforms.stride, f32(GlobalInvocationID.y) * uniforms.stride, f32(GlobalInvocationID.z) * uniforms.stride);
 
@@ -616,8 +623,8 @@ fn computeMaterials([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<
 		}
 }
 
-[[stage(compute), workgroup_size(1)]]
-fn computePhysics([[builtin(global_invocation_id)]] GlobalInvocationID : vec3<u32>) {
+@stage(compute) @workgroup_size(1)
+fn computePhysics(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 	let actor: u32 = GlobalInvocationID.x;
 
 	if (getDensity(physics.actors[actor].position) < 0.0) {

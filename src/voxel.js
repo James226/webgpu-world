@@ -199,38 +199,17 @@ export default class Voxel {
             buffer: this.cornerMaterials
           },
         },
-        {
-          binding: 2,
-          resource: {
-            buffer: this.voxelMaterialsBuffer
-          },
-        },
-        {
-          binding: 3,
-          resource: {
-            buffer: this.cornerIndexBuffer
-          },
-        },
-        {
-          binding: 4,
-          resource: {
-            buffer: this.voxelsBuffer
-          },
-        },
+       
         {
           binding: 5,
           resource: {
             buffer: this.uniformBuffer
           },
-        },
-        {
-          binding: 6,
-          resource: {
-            buffer: this.actorsBuffer
-          },
         }
       ]
     });
+
+    console.log('21', performance.now() - start);
 
     this.computeCornersBindGroup = device.createBindGroup({
       layout: this.computeCornersPipeline.getBindGroupLayout(0),
@@ -307,12 +286,6 @@ export default class Voxel {
           },
         },
         {
-          binding: 1,
-          resource: {
-            buffer: this.cornerMaterials
-          },
-        },
-        {
           binding: 2,
           resource: {
             buffer: this.voxelMaterialsBuffer
@@ -334,12 +307,6 @@ export default class Voxel {
           binding: 5,
           resource: {
             buffer: this.uniformBuffer
-          },
-        },
-        {
-          binding: 6,
-          resource: {
-            buffer: this.actorsBuffer
           },
         }
       ]

@@ -22,10 +22,10 @@ export default class VoxelCollection {
     const cubeTexture = device.createTexture({
       size: [imageBitmap.width, imageBitmap.height, 1],
       format: 'rgba8unorm',
-      usage: GPUTextureUsage.SAMPLED | GPUTextureUsage.COPY_DST,
+      usage: GPUTextureUsage.SAMPLED | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
     });
-    device.queue.copyImageBitmapToTexture(
-      { imageBitmap },
+    device.queue.copyExternalImageToTexture(
+      { source: imageBitmap },
       { texture: cubeTexture },
       [imageBitmap.width, imageBitmap.height, 1]
     );
