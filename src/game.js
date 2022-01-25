@@ -25,8 +25,8 @@ class Game {
     this.keyboard = new Keyboard();
     this.keyboard.init();
 
-    //this.physics = new Physics();
-    //await this.physics.init(device);
+    this.physics = new Physics();
+    await this.physics.init(device);
 
     this.controller = new Controller(this.keyboard);
     this.controller.init(device, queue, glslang);
@@ -87,10 +87,10 @@ class Game {
       this.generate(device);
     }
 
-    //this.physics.velocity = this.controller.velocity;
-   // this.physics.update(device, q => queue.push(q));
+    this.physics.velocity = this.controller.velocity;
+    this.physics.update(device, q => queue.push(q));
 
-    //this.controller.position = this.physics.position;
+    this.controller.position = this.physics.position;
     this.controller.update(device, projectionMatrix, timestamp);
 
     const viewMatrix = this.controller.viewMatrix;

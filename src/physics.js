@@ -25,28 +25,6 @@ export default class Voxel {
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
 
-    this.cornerMaterials = device.createBuffer({
-      size: Uint32Array.BYTES_PER_ELEMENT * 33 * 33 * 33,
-      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
-      mappedAtCreation: false,
-    });
-    
-    this.voxelMaterialsBuffer = device.createBuffer({
-      size: Uint32Array.BYTES_PER_ELEMENT * 32 * 32 * 32,
-      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
-      mappedAtCreation: false,
-    });
-
-    this.cornerIndexBuffer = device.createBuffer({
-      size: Uint32Array.BYTES_PER_ELEMENT + Uint32Array.BYTES_PER_ELEMENT * 32 * 32 * 32,
-      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
-      mappedAtCreation: false,
-    });
-
-    this.gpuReadBuffer = device.createBuffer({
-      size: Uint32Array.BYTES_PER_ELEMENT,
-      usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
-    });
 
     const permutations = new Int32Array(512);
 
@@ -68,12 +46,6 @@ export default class Voxel {
     );
     this.permutationsBuffer.unmap();
 
-    this.voxelsBuffer = device.createBuffer({
-      size: Float32Array.BYTES_PER_ELEMENT * 12 * 32 * 32 * 32,
-      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
-      mappedAtCreation: false,
-    });
-
     this.actorsBuffer = device.createBuffer({
       size: Float32Array.BYTES_PER_ELEMENT * 8,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
@@ -91,36 +63,6 @@ export default class Voxel {
           binding: 0,
           resource: {
             buffer: this.permutationsBuffer
-          },
-        },
-        {
-          binding: 1,
-          resource: {
-            buffer: this.cornerMaterials
-          },
-        },
-        {
-          binding: 2,
-          resource: {
-            buffer: this.voxelMaterialsBuffer
-          },
-        },
-        {
-          binding: 3,
-          resource: {
-            buffer: this.cornerIndexBuffer
-          },
-        },
-        {
-          binding: 4,
-          resource: {
-            buffer: this.voxelsBuffer
-          },
-        },
-        {
-          binding: 5,
-          resource: {
-            buffer: this.uniformBuffer
           },
         },
         {
