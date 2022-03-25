@@ -11,12 +11,13 @@ async function init(canvas) {
   const projectionMatrix = mat4.create();
   mat4.perspective(projectionMatrix, (2 * Math.PI) / 5, aspect, 1, 1000.0);
 
-  const swapChainFormat = 'bgra8unorm';
 
-  const context = canvas.getContext('gpupresent');
-  const swapChain = context.configureSwapChain({
+  const context = canvas.getContext('webgpu');
+  const presentationFormat = context.getPreferredFormat(adapter); // bgra8unorm
+
+  context.configure({
     device,
-    format: swapChainFormat,
+    format: presentationFormat
   });
 
   const game = new Game();
@@ -33,21 +34,27 @@ async function init(canvas) {
 
   const frame = (timestamp) => {
     const commandEncoder = device.createCommandEncoder();
-    const textureView = swapChain.getCurrentTexture().createView();
+    const textureView = context.getCurrentTexture().createView();
 
     const renderPassDescriptor = {
       colorAttachments: [
         {
+          view: textureView,
           attachment: textureView,
-          loadValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
+          clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
+          loadOp: 'clear',
+          storeOp: 'store'
         }
       ],
       depthStencilAttachment: {
-        attachment: depthTexture.createView(),
+        view: depthTexture.createView(),
   
-        depthLoadValue: 1.0,
+        depthClearValue: 1.0,
+        depthLoadOp: 'clear',
         depthStoreOp: 'store',
-        stencilLoadValue: 0,
+
+        stencilClearValue: 0,
+        stencilLoadOp: 'clear',
         stencilStoreOp: 'store',
       }
     };
@@ -56,7 +63,7 @@ async function init(canvas) {
 
     const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
     game.draw(passEncoder);
-    passEncoder.endPass();
+    passEncoder.end();
 
     const item = queue.shift();
 

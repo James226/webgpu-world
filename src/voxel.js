@@ -77,7 +77,7 @@ export default class Voxel {
 
   init(device, queue, glslang) {
     this.computePipeline = device.createComputePipeline({
-      computeStage: {
+      compute: {
         module: device.createShaderModule({
           code: glslang.compileGLSL(ComputeShader, 'compute'),
         }),
@@ -86,7 +86,7 @@ export default class Voxel {
     });
 
     this.computeCornersPipeline = device.createComputePipeline({
-      computeStage: {
+      compute: {
         module: device.createShaderModule({
           code: glslang.compileGLSL(ComputeCorners, 'compute'),
         }),
@@ -186,7 +186,7 @@ export default class Voxel {
     });
 
     this.computePositionsPipeline = device.createComputePipeline({
-      computeStage: {
+      compute: {
         module: device.createShaderModule({
           code: glslang.compileGLSL(ComputePositions, 'compute'),
         }),
@@ -219,7 +219,7 @@ export default class Voxel {
     });
 
     this.computeVoxelsPipeline = device.createComputePipeline({
-      computeStage: {
+      compute: {
         module: device.createShaderModule({
           code: glslang.compileGLSL(ComputeVoxels, 'compute'),
         }),
@@ -306,19 +306,19 @@ export default class Voxel {
       computePassEncoder.setPipeline(this.computePipeline);
       computePassEncoder.setBindGroup(0, this.computeBindGroup);
       computePassEncoder.dispatch(octreeSize + 1, octreeSize + 1, octreeSize + 1);
-      computePassEncoder.endPass();
+      computePassEncoder.end();
 
       const computeCornersPass = computeEncoder.beginComputePass();
       computeCornersPass.setPipeline(this.computeCornersPipeline);
       computeCornersPass.setBindGroup(0, this.computeCornersBindGroup);
       computeCornersPass.dispatch(octreeSize, octreeSize, octreeSize);
-      computeCornersPass.endPass();
+      computeCornersPass.end();
 
       const computePositionsPass = computeEncoder.beginComputePass();
       computePositionsPass.setPipeline(this.computePositionsPipeline);
       computePositionsPass.setBindGroup(0, this.computePositionsBindGroup);
       computePositionsPass.dispatch(1);
-      computePositionsPass.endPass();
+      computePositionsPass.end();
 
       const copyEncoder = device.createCommandEncoder();
       copyEncoder.copyBufferToBuffer(
@@ -350,7 +350,7 @@ export default class Voxel {
             computePassEncoder.setPipeline(this.computeVoxelsPipeline);
             computePassEncoder.setBindGroup(0, this.computeVoxelsBindGroup);
             computePassEncoder.dispatch(dispatchCount);
-            computePassEncoder.endPass();
+            computePassEncoder.end();
 
             const copyEncoder = device.createCommandEncoder();
             copyEncoder.copyBufferToBuffer(
