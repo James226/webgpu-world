@@ -5,7 +5,7 @@ import Random from 'seedrandom';
 
 export default class Voxel {
 
-  async init(device, queue, glslang) {
+  async init(device, queue) {
     this.velocity = vec3.fromValues(0,0,0);
     this.position = vec4.fromValues(0, -203000, 0, 0);
     const start = performance.now();
@@ -96,7 +96,7 @@ export default class Voxel {
       computePassEncoder.setPipeline(this.computePipeline);
       computePassEncoder.setBindGroup(0, this.computeBindGroup);
       computePassEncoder.dispatch(1);
-      computePassEncoder.endPass();
+      computePassEncoder.end();
 
       const copyEncoder = device.createCommandEncoder();
       copyEncoder.copyBufferToBuffer(

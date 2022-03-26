@@ -5,7 +5,7 @@ import VoxelCollection from './voxel-collection';
 import Physics from './physics';
 
 class Game {
-  async init(device, queue, glslang) {
+  async init(device, queue) {
     this.voxelWorker = new ContouringWorker();
 
     const worldSize = 10;
@@ -28,12 +28,12 @@ class Game {
     await this.physics.init(device);
 
     this.controller = new Controller(this.keyboard);
-    this.controller.init(device, queue, glslang);
+    this.controller.init(device, queue);
 
     this.drawables = [];
 
     this.collection = new VoxelCollection();
-    await this.collection.init(device, queue, glslang);
+    await this.collection.init(device, queue);
 
     this.generating = false;
 

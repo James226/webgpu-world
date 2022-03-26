@@ -4,8 +4,7 @@
   "description": "",
   "private": true,
   "scripts": {
-    "start": "webpack serve",
-    "compile": "node build.js"
+    "start": "webpack serve"
   },
   "author": "",
   "license": "ISC",
@@ -19,7 +18,6 @@
     "worker-loader": "^3.0.8"
   },
   "dependencies": {
-    "@webgpu/glslang": "0.0.15",
     "@webgpu/types": "^0.1.13",
     "gl-matrix": "^3.3.0",
     "seedrandom": "^3.0.5"

@@ -76,7 +76,7 @@ const computeVoxels = (position, stride, voxelCount, computedVoxelsData) => {
 
 export default class Voxel {
 
-  async init(device, queue, glslang) {
+  async init(device, queue) {
 
     const start = performance.now();
     console.log('Start loading voxel engine', performance.now() - start);

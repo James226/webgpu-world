@@ -24,7 +24,7 @@ module.exports = {
         exclude: /node_modules/,
       },
       {
-        test: /\.(glsl|wgsl)$/i,
+        test: /\.wgsl$/i,
         use: 'raw-loader',
       },
       {

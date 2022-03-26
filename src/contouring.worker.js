@@ -1,14 +1,12 @@
 import { vec3 } from 'gl-matrix';
-import glslCompiler from '@webgpu/glslang/dist/web-devel-onefile/glslang';
 import Voxel from './voxel';
 
 (async function() {
   const adapter = await navigator.gpu.requestAdapter();
   const device = await adapter.requestDevice();
-  const glslang = await glslCompiler();
 
   const voxel = new Voxel();
-  await voxel.init(device, () => {}, glslang);
+  await voxel.init(device, () => {});
 
   console.log('Voxel engine init complete');
   postMessage({ type: 'init_complete' });

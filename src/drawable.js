@@ -1,5 +1,5 @@
-import VertexShader from './vertex.glsl';
-import FragmentShader from './fragment.glsl';
+import VertexShader from './vertex.wgsl';
+import FragmentShader from './fragment.wgsl';
 import { mat4, vec3 } from 'gl-matrix';
 
 const swapChainFormat = 'bgra8unorm';
@@ -10,12 +10,12 @@ export default class Drawable {
     this.position = position;
   }
 
-  init(device, queue, glslang) {
+  init(device, queue) {
     this.pipeline = device.createRenderPipeline({
       vertex: {
         module:
           device.createShaderModule({
-            code: glslang.compileGLSL(VertexShader, 'vertex'),
+            code: VertexShader,
           }),
         buffers: [
           {
@@ -41,7 +41,7 @@ export default class Drawable {
       fragment: {
         module:
           device.createShaderModule({
-            code: glslang.compileGLSL(FragmentShader, 'fragment')
+            code: FragmentShader
           }),
         entryPoint: 'main',
         targets: [

@@ -1,5 +1,5 @@
-import VertexShader from './vertex.glsl';
-import FragmentShader from './fragment.glsl';
+import VertexShader from './vertex.wgsl';
+import FragmentShader from './fragment.wgsl';
 import { vec3 } from 'gl-matrix';
 import VoxelObject from './voxel-object';
 
@@ -12,7 +12,7 @@ export default class VoxelCollection {
   }
 
 
-  async init(device, queue, glslang) {
+  async init(device, queue) {
 
     const img = document.createElement('img');
     img.src = 'grass.jpg';
@@ -114,7 +114,7 @@ export default class VoxelCollection {
       vertex: {
         module:
           device.createShaderModule({
-            code: glslang.compileGLSL(VertexShader, 'vertex'),
+            code: VertexShader,
           }),
         buffers: [
           {
@@ -140,7 +140,7 @@ export default class VoxelCollection {
       fragment: {
         module:
           device.createShaderModule({
-            code: glslang.compileGLSL(FragmentShader, 'fragment')
+            code: FragmentShader
           }),
         entryPoint: 'main',
         targets: [

@@ -1,11 +1,9 @@
-import { mat4 } from 'gl-matrix';
-import glslCompiler from '@webgpu/glslang/dist/web-devel-onefile/glslang';
+import {mat4} from 'gl-matrix';
 import Game from './game';
 
 async function init(canvas) {
   const adapter = await navigator.gpu.requestAdapter();
   const device = await adapter.requestDevice();
-  const glslang = await glslCompiler();
 
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -16,7 +14,7 @@ async function init(canvas) {
 
 
   const context = canvas.getContext('webgpu');
-  const presentationFormat = context.getPreferredFormat(adapter); // bgra8unorm
+  const presentationFormat = context.getPreferredFormat(adapter);
 
   context.configure({
     device,
@@ -27,7 +25,7 @@ async function init(canvas) {
 
   const queue = [];
 
-  await game.init(device, queue, glslang);
+  await game.init(device, queue);
 
   let depthTexture = device.createTexture({
     size: { width: canvas.width, height: canvas.height },
@@ -52,7 +50,7 @@ async function init(canvas) {
   window.addEventListener('resize', resize, false);
 
   let lastTimestamp;
-  const frame = (timestamp) => {
+  return (timestamp) => {
     const delta = lastTimestamp - timestamp;
 
     const commandEncoder = device.createCommandEncoder();
@@ -62,14 +60,14 @@ async function init(canvas) {
       colorAttachments: [
         {
           view: textureView,
-          clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
+          clearValue: {r: 0.0, g: 0.0, b: 0.0, a: 1.0},
           loadOp: 'clear' as const,
           storeOp: 'store' as const
         }
       ],
       depthStencilAttachment: {
         view: depthTexture.createView(),
-  
+
         depthClearValue: 1.0,
         depthLoadOp: 'clear',
         depthStoreOp: 'store',
@@ -93,7 +91,7 @@ async function init(canvas) {
         item.callback();
       }
     })
-    
+
     if (item) {
       device.queue.submit([commandEncoder.finish(), ...item.items]);
     } else {
@@ -103,9 +101,7 @@ async function init(canvas) {
     //   item.callback();
     // }
     lastTimestamp = timestamp;
-  }
-
-  return frame;
+  };
 }
 
 const canvas = document.getElementById('canvas');
