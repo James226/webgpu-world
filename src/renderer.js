@@ -14,12 +14,13 @@ async function init(canvas) {
   const projectionMatrix = mat4.create();
   mat4.perspective(projectionMatrix, (2 * Math.PI) / 5, aspect, 1, (1 << 20) * 32);
 
-  const swapChainFormat = 'bgra8unorm';
 
   const context = canvas.getContext('webgpu');
-  const swapChain = context.configure({
+  const presentationFormat = context.getPreferredFormat(adapter); // bgra8unorm
+
+  context.configure({
     device,
-    format: swapChainFormat,
+    format: presentationFormat
   });
 
   const game = new Game();
@@ -61,16 +62,21 @@ async function init(canvas) {
       colorAttachments: [
         {
           view: textureView,
-          loadValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
+          attachment: textureView,
+          clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
+          loadOp: 'clear',
           storeOp: 'store'
         }
       ],
       depthStencilAttachment: {
         view: depthTexture.createView(),
   
-        depthLoadValue: 1.0,
+        depthClearValue: 1.0,
+        depthLoadOp: 'clear',
         depthStoreOp: 'store',
-        stencilLoadValue: 0,
+
+        stencilClearValue: 0,
+        stencilLoadOp: 'clear',
         stencilStoreOp: 'store',
       }
     };
@@ -79,7 +85,7 @@ async function init(canvas) {
 
     const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
     game.draw(passEncoder);
-    passEncoder.endPass();
+    passEncoder.end();
 
     const item = queue.shift();
 

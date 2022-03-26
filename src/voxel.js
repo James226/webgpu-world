@@ -77,7 +77,7 @@ const computeVoxels = (position, stride, voxelCount, computedVoxelsData) => {
 export default class Voxel {
 
   async init(device, queue, glslang) {
-    
+
     const start = performance.now();
     console.log('Start loading voxel engine', performance.now() - start);
     this.computePipeline = await device.createComputePipelineAsync({
@@ -163,7 +163,7 @@ export default class Voxel {
     );
     this.permutationsBuffer.unmap();
 
-    
+
 
     this.voxelsBuffer = device.createBuffer({
       size: Float32Array.BYTES_PER_ELEMENT * 12 * 32 * 32 * 32,
@@ -171,7 +171,7 @@ export default class Voxel {
       mappedAtCreation: false,
     });
 
-    
+
     this.actorsBuffer = device.createBuffer({
       size: Float32Array.BYTES_PER_ELEMENT * 8,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
@@ -195,7 +195,7 @@ export default class Voxel {
             buffer: this.cornerMaterials
           },
         },
-       
+
         {
           binding: 5,
           resource: {
@@ -356,19 +356,19 @@ export default class Voxel {
       computePassEncoder.setPipeline(this.computePipeline);
       computePassEncoder.setBindGroup(0, this.computeBindGroup);
       computePassEncoder.dispatch(octreeSize + 1, octreeSize + 1, octreeSize + 1);
-      computePassEncoder.endPass();
+      computePassEncoder.end();
 
       const computeCornersPass = computeEncoder.beginComputePass();
       computeCornersPass.setPipeline(this.computeCornersPipeline);
       computeCornersPass.setBindGroup(0, this.computeCornersBindGroup);
       computeCornersPass.dispatch(octreeSize, octreeSize, octreeSize);
-      computeCornersPass.endPass();
+      computeCornersPass.end();
 
       const computePositionsPass = computeEncoder.beginComputePass();
       computePositionsPass.setPipeline(this.computePositionsPipeline);
       computePositionsPass.setBindGroup(0, this.computePositionsBindGroup);
       computePositionsPass.dispatch(1);
-      computePositionsPass.endPass();
+      computePositionsPass.end();
 
       const copyEncoder = device.createCommandEncoder();
       copyEncoder.copyBufferToBuffer(
@@ -434,7 +434,7 @@ export default class Voxel {
             computePassEncoder.setPipeline(this.computeVoxelsPipeline);
             computePassEncoder.setBindGroup(0, this.computeVoxelsBindGroup);
             computePassEncoder.dispatch(dispatchCount);
-            computePassEncoder.endPass();
+            computePassEncoder.end();
 
             const copyEncoder = device.createCommandEncoder();
             copyEncoder.copyBufferToBuffer(
