@@ -29,7 +29,7 @@ const edgevmap = [
   [0, 1], [2, 3], [4, 5], [6, 7]		// z-axis
 ];
 
-const ContourProcessEdge = (node, dir, indices) => {
+const ContourProcessEdge = (node: any, dir: number, indices: number[]) => {
   let minSize = 1000000;		// arbitrary big number
   let minIndex = 0;
   let indexes = [-1, -1, -1, -1];
@@ -84,7 +84,7 @@ const ContourProcessEdge = (node, dir, indices) => {
   }
 }
 
-const ContourEdgeProc = (node, dir, indices) => {
+const ContourEdgeProc = (node: any, dir: number, indices: number[]) => {
   if (node[0] == null || node[1] == null || node[2] == null || node[3] == null)
     return;
 
@@ -118,7 +118,7 @@ const ContourEdgeProc = (node, dir, indices) => {
   }
 }
 
-const ContourFaceProc = (node, dir, indices) => {
+const ContourFaceProc = (node: any, dir: number, indices: number[]) => {
   if (node[0] == null || node[1] == null)
     return;
 
@@ -180,7 +180,7 @@ const ContourFaceProc = (node, dir, indices) => {
   }
 }
 
-const ContourCellProc = (node, indices) => {
+const ContourCellProc = (node: any, indices: number[]) => {
   if (node == null)
     return;
 

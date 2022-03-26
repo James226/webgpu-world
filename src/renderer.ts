@@ -1,5 +1,6 @@
 import {mat4} from 'gl-matrix';
 import Game from './game';
+import {QueueItem} from "./queueItem";
 
 async function init(canvas) {
   const adapter = await navigator.gpu.requestAdapter();
@@ -23,9 +24,9 @@ async function init(canvas) {
 
   const game = new Game();
 
-  const queue = [];
+  const queue: QueueItem[] = [];
 
-  await game.init(device, queue);
+  await game.init(device);
 
   let depthTexture = device.createTexture({
     size: { width: canvas.width, height: canvas.height },
@@ -49,8 +50,8 @@ async function init(canvas) {
 
   window.addEventListener('resize', resize, false);
 
-  let lastTimestamp;
-  return (timestamp) => {
+  let lastTimestamp: number;
+  return (timestamp: number) => {
     const delta = lastTimestamp - timestamp;
 
     const commandEncoder = device.createCommandEncoder();
@@ -105,7 +106,7 @@ async function init(canvas) {
 const canvas = document.getElementById('canvas');
 
 init(canvas).then((frame) => {
-  const doFrame = (timestamp) => {
+  const doFrame = (timestamp: number) => {
     frame(timestamp);
     requestAnimationFrame(doFrame);
   };

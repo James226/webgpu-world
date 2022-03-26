@@ -155,7 +155,7 @@ export default class VoxelCollection {
   }
 
   set(device, key, position, vertices, normals, indices) {
-    let obj = this.objects.get(key);
+    let obj: VoxelObject = this.objects.get(key);
     if (!obj) {
       obj = this.pool.pop();
       if (!obj) {
@@ -193,7 +193,7 @@ export default class VoxelCollection {
     }
   }
 
-  draw(passEncoder) {
+  draw(passEncoder: GPURenderPassEncoder) {
     passEncoder.setPipeline(this.pipeline);
     passEncoder.setBindGroup(1, this.uniformBindGroup);
     for (const value of this.objects.values()) {

@@ -23,7 +23,7 @@ export default class Controller {
   init() {
   }
 
-  update(device, projectionMatrix, timestamp) {
+  update(device: GPUDevice, projectionMatrix: mat4, timestamp: number) {
     
     //const distance = this.keyboard.keydown('shift') ? timestamp * 10 : timestamp;
     const distance = this.keyboard.keydown('shift') ? 1000 : 10;

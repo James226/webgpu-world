@@ -102,7 +102,7 @@ export default class VoxelObject {
     return modelViewProjectionMatrix;
   }
 
-  update(device, projectionMatrix) {
+  update(device: GPUDevice, projectionMatrix: mat4) {
     const transformationMatrix = this.getTransformationMatrix(projectionMatrix);
 
     device.queue.writeBuffer(
@@ -114,7 +114,7 @@ export default class VoxelObject {
     );
   }
 
-  draw(passEncoder) {
+  draw(passEncoder: GPURenderPassEncoder) {
     passEncoder.setBindGroup(0, this.uniformBindGroup);
     passEncoder.setVertexBuffer(0, this.vertexBuffer);
     passEncoder.setIndexBuffer(this.indexBuffer, 'uint16');

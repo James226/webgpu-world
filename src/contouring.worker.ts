@@ -1,5 +1,6 @@
-import { vec3 } from 'gl-matrix';
+import {vec3} from 'gl-matrix';
 import Voxel from './voxel';
+import {QueueItem} from "./queueItem";
 
 const ctx: Worker = self as any;
 
@@ -13,7 +14,7 @@ const ctx: Worker = self as any;
   console.log('Voxel engine init complete');
   postMessage({ type: 'init_complete' });
 
-  const queue = (item) => {
+  const queue = (item: QueueItem) => {
     device.queue.onSubmittedWorkDone().then(_ => {
       item.callback();
     })

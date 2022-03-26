@@ -3,7 +3,8 @@ import Controller from './controller';
 import Keyboard from './keyboard';
 import VoxelCollection from './voxel-collection';
 import Physics from './physics';
-import {vec3} from "gl-matrix";
+import {mat4, vec3} from "gl-matrix";
+import {QueueItem} from './queueItem';
 
 class Game {
   private loaded: boolean;
@@ -15,7 +16,7 @@ class Game {
   private generating: boolean;
   private stride: number;
 
-  async init(device, queue) {
+  async init(device: GPUDevice) {
     const worldSize = 10;
     this.loaded = false;
 
@@ -48,7 +49,7 @@ class Game {
     console.log(this.stride);
   }
 
-  generate(device) {
+  generate(device: GPUDevice) {
     if (this.generating || !this.loaded) return;
 
     const t0 = performance.now();
@@ -82,13 +83,13 @@ class Game {
       console.log(`Generation complete in ${performance.now() - t0} milliseconds`);
   }
 
-  update(device, projectionMatrix, timestamp, queue) {
+  update(device: GPUDevice, projectionMatrix: mat4, timestamp: number, queue: QueueItem[]) {
     if (this.keyboard.keypress('g')) {
       this.generate(device);
     }
 
     this.physics.velocity = this.controller.velocity;
-    this.physics.update(device, q => queue.push(q));
+    this.physics.update(device, (q: QueueItem) => queue.push(q));
 
     this.controller.position = this.physics.position as vec3;
     this.controller.update(device, projectionMatrix, timestamp);
@@ -99,7 +100,7 @@ class Game {
     this.keyboard.update();
   }
 
-  draw(passEncoder) {
+  draw(passEncoder: GPURenderPassEncoder) {
     this.collection.draw(passEncoder);
   }
 }
