@@ -1,4 +1,3 @@
-import { vec3, mat4 } from 'gl-matrix';
 import ContouringWorker from './contouring.worker';
 import Controller from './controller';
 import Keyboard from './keyboard';

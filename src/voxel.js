@@ -4,10 +4,6 @@ import ComputeCorners from './compute-corners.wgsl';
 import ComputePositions from './compute-positions.wgsl';
 import ComputeVoxels from './compute-voxels.wgsl';
 
-import GlslComputeMaterials from './glsl/compute-materials.glsl';
-import GlslComputeCorners from './glsl/compute-corners.glsl';
-import GlslComputePositions from './glsl/compute-positions.glsl';
-import GlslComputeVoxels from './glsl/compute-voxels.glsl';
 import Random from 'seedrandom';
 import ContourCells from './contouring';
 import ConstructOctree from './octree';
@@ -98,7 +94,7 @@ export default class Voxel {
     this.computeCornersPipeline = await device.createComputePipelineAsync({
       compute: {
         module: device.createShaderModule({
-          code: glslang.compileGLSL(GlslComputeCorners, 'compute')
+          code: ComputeCorners
         }),
         entryPoint: 'main',
       },
