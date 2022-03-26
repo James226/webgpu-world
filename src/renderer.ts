@@ -58,14 +58,13 @@ async function init(canvas) {
     const commandEncoder = device.createCommandEncoder();
     const textureView = context.getCurrentTexture().createView();
 
-    const renderPassDescriptor = {
+    const renderPassDescriptor: GPURenderPassDescriptor = {
       colorAttachments: [
         {
           view: textureView,
-          attachment: textureView,
           clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
-          loadOp: 'clear',
-          storeOp: 'store'
+          loadOp: 'clear' as const,
+          storeOp: 'store' as const
         }
       ],
       depthStencilAttachment: {

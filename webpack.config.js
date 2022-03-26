@@ -2,7 +2,7 @@ const path = require('path');
 
 module.exports = {
   mode: 'development',
-  entry: './src/renderer.js',
+  entry: './src/renderer.ts',
   output: {
     filename: 'main.js',
     path: path.resolve(__dirname, 'dist'),
@@ -18,6 +18,11 @@ module.exports = {
   },
   module: {
     rules: [
+      {
+        test: /\.tsx?$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+      },
       {
         test: /\.(glsl|wgsl)$/i,
         use: 'raw-loader',
