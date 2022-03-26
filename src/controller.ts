@@ -1,7 +1,17 @@
-import { mat4, vec3, quat } from "gl-matrix";
+import { mat4, vec3 } from "gl-matrix";
+import Keyboard from "./keyboard";
 
 export default class Controller {
-  constructor(keyboard) {
+  public viewMatrix: mat4;
+  public position: vec3;
+  public velocity: vec3;
+
+  private keyboard: Keyboard;
+  private readonly rotation: vec3;
+  private forward: any;
+  private right: any;
+
+  constructor(keyboard: Keyboard) {
     this.keyboard = keyboard;
 
     this.viewMatrix = mat4.create();
@@ -67,18 +77,12 @@ export default class Controller {
 
     const up = vec3.normalize(vec3.create(), this.position);
     mat4.lookAt(this.viewMatrix, this.position, vec3.add(vec3.create(), this.position, vec3.cross(vec3.create(), vec3.fromValues(0.0, 0.0, 1.0), up)), up)
-    // mat4.translate(this.viewMatrix, this.viewMatrix, this.position);
 
     const inverted = mat4.invert(mat4.create(), this.viewMatrix);
     this.forward = inverted.slice(8, 11);
     vec3.normalize(this.forward, this.forward);
     this.right = inverted.slice(0, 3);
     vec3.normalize(this.right, this.right);
-
-    
-    
-    // mat4.rotateX(this.viewMatrix, this.viewMatrix, this.rotation[0]);
-    // mat4.rotateY(this.viewMatrix, this.viewMatrix, this.rotation[1]);
 
     mat4.multiply(this.viewMatrix, projectionMatrix, this.viewMatrix);
   }

@@ -1,4 +1,7 @@
 export default class Keyboard {
+  private readonly keys: {};
+  private lastKeys: {};
+
   constructor() {
     this.keys = {};
     this.lastKeys = {};

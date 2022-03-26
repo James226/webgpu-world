@@ -1,5 +1,4 @@
 const MATERIAL_AIR = 0;
-const MATERIAL_SOLID = 1;
 
 const cellProcFaceMask = [[0, 4, 0], [1, 5, 0], [2, 6, 0], [3, 7, 0], [0, 2, 1], [4, 6, 1], [1, 3, 1], [5, 7, 1], [0, 1, 2], [2, 3, 2], [4, 5, 2], [6, 7, 2]];
 const cellProcEdgeMask = [[0, 1, 2, 3, 0], [4, 5, 6, 7, 0], [0, 4, 1, 5, 1], [2, 6, 3, 7, 1], [0, 2, 4, 6, 2], [1, 3, 5, 7, 2]];
@@ -48,14 +47,14 @@ const ContourProcessEdge = (node, dir, indices) => {
     if (node[i].size < minSize) {
       minSize = node[i].size;
       minIndex = i;
-      flip = m1 != MATERIAL_AIR;
+      flip = m1 !== MATERIAL_AIR;
     }
 
     indexes[i] = node[i].drawInfo.index;
 
     signChange[i] =
-      (m1 == MATERIAL_AIR && m2 != MATERIAL_AIR) ||
-      (m1 != MATERIAL_AIR && m2 == MATERIAL_AIR);
+      (m1 === MATERIAL_AIR && m2 !== MATERIAL_AIR) ||
+      (m1 !== MATERIAL_AIR && m2 === MATERIAL_AIR);
 
 
   }
@@ -89,10 +88,10 @@ const ContourEdgeProc = (node, dir, indices) => {
   if (node[0] == null || node[1] == null || node[2] == null || node[3] == null)
     return;
 
-  if (node[0].type != 'internal' &&
-    node[1].type != 'internal' &&
-    node[2].type != 'internal' &&
-    node[3].type != 'internal') {
+  if (node[0].type !== 'internal' &&
+    node[1].type !== 'internal' &&
+    node[2].type !== 'internal' &&
+    node[3].type !== 'internal') {
     ContourProcessEdge(node, dir, indices);
   }
   else {
@@ -106,7 +105,7 @@ const ContourEdgeProc = (node, dir, indices) => {
       ];
 
       for (let j = 0; j < 4; j++) {
-        if (node[j].type == 'leaf' || node[j].type == 'pseudo') {
+        if (node[j].type === 'leaf' || node[j].type === 'pseudo') {
           edgeNodes[j] = node[j];
         }
         else {
@@ -123,8 +122,8 @@ const ContourFaceProc = (node, dir, indices) => {
   if (node[0] == null || node[1] == null)
     return;
 
-  if (node[0].type == 'internal' ||
-    node[1].type == 'internal') {
+  if (node[0].type === 'internal' ||
+    node[1].type === 'internal') {
     for (let i = 0; i < 4; i++) {
       let faceNodes = [];
 
@@ -134,7 +133,7 @@ const ContourFaceProc = (node, dir, indices) => {
       ];
 
       for (let j = 0; j < 2; j++) {
-        if (node[j].type != 'internal') {
+        if (node[j].type !== 'internal') {
           faceNodes[j] = node[j];
         }
         else {
@@ -167,8 +166,8 @@ const ContourFaceProc = (node, dir, indices) => {
       ];
 
       for (let j = 0; j < 4; j++) {
-        if (node[order[j]].type == 'leaf' ||
-          node[order[j]].type == 'pseudo') {
+        if (node[order[j]].type === 'leaf' ||
+          node[order[j]].type === 'pseudo') {
           edgeNodes[j] = node[order[j]];
         }
         else {
@@ -185,7 +184,7 @@ const ContourCellProc = (node, indices) => {
   if (node == null)
     return;
 
-  if (node.type == 'internal') {
+  if (node.type === 'internal') {
     for (let i = 0; i < 8; i++) {
       ContourCellProc(node.children[i], indices);
     }

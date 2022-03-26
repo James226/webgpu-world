@@ -19,7 +19,7 @@ const constructParents = (children, position, parentSize) => {
       (node.min[1] - position[1]) % parentSize,
       (node.min[2] - position[2]) % parentSize));
 
-    let parent = parentsHash[parentPos];
+    let parent = parentsHash[(<any>parentPos)];
     if (!parent) {
       parent = {
         min: parentPos,
@@ -51,8 +51,6 @@ const constructTreeUpwards = (nodes, rootMin, rootNodeSize) => {
     return null;
   }
 
-  let baseNodeSize = nodes[0].size;
-
   nodes.sort((lhs, rhs) => lhs.size - rhs.size);
 
   // the input nodes may be different sizes if a seam octree is being constructed
@@ -77,7 +75,7 @@ const constructTreeUpwards = (nodes, rootMin, rootNodeSize) => {
       newNodes.push(nodes[i]);
 
     nodes.length = 0;
-    for (let i = 0; i < newNodes.Count; i++)
+    for (let i = 0; i < newNodes.length; i++)
       nodes.push(newNodes[i]);
   }
 

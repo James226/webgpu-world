@@ -1,67 +1,18 @@
-import VertexShader from './vertex.wgsl';
-import FragmentShader from './fragment.wgsl';
-import { mat4, vec3 } from 'gl-matrix';
+import {mat4, vec3} from 'gl-matrix';
 
-const swapChainFormat = 'bgra8unorm';
+export default class VoxelObject {
+  public position: vec3;
+  private vertexBuffer: GPUBuffer;
+  private indexCount: number;
+  private indexBuffer: GPUBuffer;
+  private uniformBuffer: GPUBuffer;
+  private uniformBindGroup: GPUBindGroup;
 
-
-export default class Drawable {
-  constructor(position) {
+  constructor(position: vec3) {
     this.position = position;
   }
 
-  init(device, queue) {
-    this.pipeline = device.createRenderPipeline({
-      vertex: {
-        module:
-          device.createShaderModule({
-            code: VertexShader,
-          }),
-        buffers: [
-          {
-            arrayStride: 4 * 10,
-            attributes: [
-              {
-                // position
-                shaderLocation: 0,
-                offset: 0,
-                format: 'float32x4',
-              },
-              {
-                // color
-                shaderLocation: 1,
-                offset: 4 * 4,
-                format: 'float32x4',
-              },
-            ],
-          },
-        ],
-        entryPoint: 'main',
-      },
-      fragment: {
-        module:
-          device.createShaderModule({
-            code: FragmentShader
-          }),
-        entryPoint: 'main',
-        targets: [
-          {
-            format: swapChainFormat,
-          },
-        ]
-      },
-
-      primitive: {
-        topology: 'triangle-list',
-        cullMode: 'back',
-      },
-      depthStencil: {
-        depthWriteEnabled: true,
-        depthCompare: 'less',
-        format: 'depth24plus-stencil8',
-      },
-    });
-
+  init(device: GPUDevice, pipeline) {
     const cubeVertexArray = new Float32Array([]);
 
     this.vertexBuffer = device.createBuffer({
@@ -91,7 +42,7 @@ export default class Drawable {
     });
 
     this.uniformBindGroup = device.createBindGroup({
-      layout: this.pipeline.getBindGroupLayout(0),
+      layout: pipeline.getBindGroupLayout(0),
       entries: [
         {
           binding: 0,
@@ -157,14 +108,13 @@ export default class Drawable {
     device.queue.writeBuffer(
       this.uniformBuffer,
       0,
-      transformationMatrix.buffer,
-      transformationMatrix.byteOffset,
-      transformationMatrix.byteLength
+        (<Float32Array>transformationMatrix).buffer,
+        (<Float32Array>transformationMatrix).byteOffset,
+        (<Float32Array>transformationMatrix).byteLength
     );
   }
 
   draw(passEncoder) {
-    passEncoder.setPipeline(this.pipeline);
     passEncoder.setBindGroup(0, this.uniformBindGroup);
     passEncoder.setVertexBuffer(0, this.vertexBuffer);
     passEncoder.setIndexBuffer(this.indexBuffer, 'uint16');

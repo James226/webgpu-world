@@ -1,18 +1,23 @@
-import VertexShader from './vertex.wgsl';
-import FragmentShader from './fragment.wgsl';
+import VertexShader from '!!raw-loader!./vertex.wgsl';
+import FragmentShader from '!!raw-loader!./fragment.wgsl';
 import { vec3 } from 'gl-matrix';
 import VoxelObject from './voxel-object';
 
 const swapChainFormat = 'bgra8unorm';
 
 export default class VoxelCollection {
+  private readonly objects: Map<any, VoxelObject>;
+  private readonly pool: VoxelObject[];
+  private uniformBindGroup: GPUBindGroup;
+  private pipeline: GPURenderPipeline;
+
   constructor() {
-    this.objects = {};
+    this.objects = new Map<any, VoxelObject>();
     this.pool = [];
   }
 
 
-  async init(device, queue) {
+  async init(device) {
 
     const img = document.createElement('img');
     img.src = 'grass.jpg';
@@ -22,7 +27,7 @@ export default class VoxelCollection {
     const cubeTexture = device.createTexture({
       size: [imageBitmap.width, imageBitmap.height, 1],
       format: 'rgba8unorm',
-      usage: GPUTextureUsage.SAMPLED | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+      usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
     });
     device.queue.copyExternalImageToTexture(
       { source: imageBitmap },
@@ -39,12 +44,7 @@ export default class VoxelCollection {
     });
 
 
-    const uniformBufferSize = 4 * 16; // 4x4 matrix
-  const uniformBuffer = device.createBuffer({
-    size: uniformBufferSize,
-    usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-  });
- 
+
   const uniformLayout = device.createBindGroupLayout({
     entries: [
       {
@@ -55,22 +55,6 @@ export default class VoxelCollection {
           type: 'uniform',
         },
       },
-// '      {
-//         // Sampler
-//         binding: 0,
-//         visibility: GPUShaderStage.FRAGMENT,
-//         sampler: {
-//           type: 'filtering',
-//         },
-//       },'
-      // {
-      //   // Texture view
-      //   binding: 2,
-      //   visibility: GPUShaderStage.FRAGMENT,
-      //   texture: {
-      //     sampleType: 'float',
-      //   },
-      // },
     ],
   });
 
@@ -78,14 +62,6 @@ export default class VoxelCollection {
 
     const bindGroupLayout = device.createBindGroupLayout({
       entries: [
-        // {
-        //   // Transform
-        //   binding: 0,
-        //   visibility: GPUShaderStage.VERTEX,
-        //   buffer: {
-        //     type: 'uniform',
-        //   },
-        // },
         {
           // Sampler
           binding: 0,
@@ -166,12 +142,6 @@ export default class VoxelCollection {
     this.uniformBindGroup = device.createBindGroup({
       layout: this.pipeline.getBindGroupLayout(1),
       entries: [
-        // {
-        //   binding: 0,
-        //   resource: {
-        //     buffer: uniformBuffer,
-        //   },
-        // },
         {
           binding: 0,
           resource: sampler,
@@ -182,15 +152,10 @@ export default class VoxelCollection {
         },
       ],
     });
-  
   }
-  
 
   set(device, key, position, vertices, normals, indices) {
-    console.log(position);
-    //const key = `${position.x},${position.y},${position.z}`;
-
-    let obj = this.objects[key];
+    let obj = this.objects.get(key);
     if (!obj) {
       obj = this.pool.pop();
       if (!obj) {
@@ -199,33 +164,31 @@ export default class VoxelCollection {
       } else {
         obj.position = vec3.fromValues(position.x, position.y, position.z);
       }
-      this.objects[key] = obj;
+      this.objects.set(key, obj);
     }
 
     obj.setVertexBuffer(device, vertices, normals);
     obj.setIndexBuffer(device, indices);
   }
 
-  free(device, key, position) {
-    //const key = `${position.x},${position.y},${position.z}`;
-
-    let obj = this.objects[key];
+  free(device, key, _) {
+    let obj = this.objects.get(key);
 
     if(obj) {
       this.pool.push(obj);
-      delete this.objects[key];
+      this.objects.delete(key);
     }
   }
 
   freeAll() {
-    for (const [key, value] of Object.entries(this.objects)) {
+    for (const [key, value] of this.objects) {
       this.pool.push(value);
-      delete this.objects[key];
+      this.objects.delete(key);
     }
   }
 
   update(device, projectionMatrix) {
-    for (const value of Object.values(this.objects)) {
+    for (const value of this.objects.values()) {
       value.update(device, projectionMatrix)
     }
   }
@@ -233,7 +196,7 @@ export default class VoxelCollection {
   draw(passEncoder) {
     passEncoder.setPipeline(this.pipeline);
     passEncoder.setBindGroup(1, this.uniformBindGroup);
-    for (const value of Object.values(this.objects)) {
+    for (const value of this.objects.values()) {
       value.draw(passEncoder)
     }
   }

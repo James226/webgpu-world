@@ -86,7 +86,7 @@ async function init(canvas) {
 
     const item = queue.shift();
 
-    device.queue.onSubmittedWorkDone().then(e => {
+    device.queue.onSubmittedWorkDone().then(_ => {
       if (item) {
         item.callback();
       }
@@ -97,9 +97,7 @@ async function init(canvas) {
     } else {
       device.queue.submit([commandEncoder.finish()]);
     }
-    // if (item) {
-    //   item.callback();
-    // }
+
     lastTimestamp = timestamp;
   };
 }

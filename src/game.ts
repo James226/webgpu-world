@@ -1,25 +1,23 @@
-import ContouringWorker from './contouring.worker';
+import ContouringWorker from 'worker-loader!./contouring.worker';
 import Controller from './controller';
 import Keyboard from './keyboard';
 import VoxelCollection from './voxel-collection';
 import Physics from './physics';
+import {vec3} from "gl-matrix";
 
 class Game {
-  async init(device, queue) {
-    this.voxelWorker = new ContouringWorker();
+  private loaded: boolean;
+  private voxelWorker: ContouringWorker;
+  private keyboard: Keyboard;
+  private physics: Physics;
+  private controller: Controller;
+  private collection: VoxelCollection;
+  private generating: boolean;
+  private stride: number;
 
+  async init(device, queue) {
     const worldSize = 10;
     this.loaded = false;
-
-    this.voxelWorker.onmessage = ({ data }) => {
-      if (data.type === 'init_complete') {
-      console.log('Received Voxel engine init complete');
-
-        document.getElementById('loading').style.display = 'none';
-        this.loaded = true;
-        this.generate(device);
-      }
-    }
 
     this.keyboard = new Keyboard();
     this.keyboard.init();
@@ -28,14 +26,23 @@ class Game {
     await this.physics.init(device);
 
     this.controller = new Controller(this.keyboard);
-    this.controller.init(device, queue);
-
-    this.drawables = [];
+    this.controller.init();
 
     this.collection = new VoxelCollection();
-    await this.collection.init(device, queue);
+    await this.collection.init(device);
 
     this.generating = false;
+
+    this.voxelWorker = new ContouringWorker();
+    this.voxelWorker.onmessage = ({ data }) => {
+      if (data.type === 'init_complete') {
+        console.log('Received Voxel engine init complete');
+
+        document.getElementById('loading').style.display = 'none';
+        this.loaded = true;
+        this.generate(device);
+      }
+    }
 
     this.stride = 1 << 14;
     console.log(this.stride);
@@ -50,19 +57,13 @@ class Game {
         const { type, i, vertices, normals, indices } = data;
         switch (type) {
           case 'clear':
-            //this.drawables[i].setVertexBuffer(device, new Float32Array(), new Float32Array());
-            //this.drawables[i].setIndexBuffer(device, new Uint16Array());
             break;
           case 'update':
             {
               if (vertices.byteLength) {
                 this.collection.set(device, `${data.ix}x${data.iy}x${data.iz}`, { x: data.x, y: data.y, z: data.z }, new Float32Array(vertices), new Float32Array(normals), new Uint16Array(indices));
-                //this.drawables[i].setVertexBuffer(device, new Float32Array(vertices), new Float32Array(normals));
-                //this.drawables[i].setIndexBuffer(device, new Uint16Array(indices));
               } else {
                 this.collection.free(device, `${data.ix}x${data.iy}x${data.iz}`, { x: data.x, y: data.y, z: data.z });
-                //this.drawables[i].setVertexBuffer(device, new Float32Array(), new Float32Array());
-                //this.drawables[i].setIndexBuffer(device, new Uint16Array());
               }
               break;
             }
@@ -89,22 +90,16 @@ class Game {
     this.physics.velocity = this.controller.velocity;
     this.physics.update(device, q => queue.push(q));
 
-    this.controller.position = this.physics.position;
+    this.controller.position = this.physics.position as vec3;
     this.controller.update(device, projectionMatrix, timestamp);
 
     const viewMatrix = this.controller.viewMatrix;
     
-    // for (let i = 0; i < this.drawables.length; i++) {
-    //   this.drawables[i].update(device, viewMatrix);
-    // }
     this.collection.update(device, viewMatrix);
     this.keyboard.update();
   }
 
   draw(passEncoder) {
-    // for (let i = 0; i < this.drawables.length; i++) {
-    //   this.drawables[i].draw(passEncoder);
-    // }
     this.collection.draw(passEncoder);
   }
 }

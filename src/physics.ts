@@ -1,11 +1,20 @@
 import { vec3, vec4 } from 'gl-matrix';
-import ComputeVoxels from './compute-voxels.wgsl';
+import ComputeVoxels from '!!raw-loader!./compute-voxels.wgsl';
 
 import Random from 'seedrandom';
 
 export default class Voxel {
+  velocity: vec3;
+  position: vec4;
+  private computePipeline: GPUComputePipeline;
+  private uniformBuffer: GPUBuffer;
+  private permutationsBuffer: GPUBuffer;
+  private actorsBuffer: GPUBuffer;
+  private computeBindGroup: GPUBindGroup;
+  private actorsReadBuffer: GPUBuffer;
+  private running: boolean;
 
-  async init(device, queue) {
+  async init(device: GPUDevice) {
     this.velocity = vec3.fromValues(0,0,0);
     this.position = vec4.fromValues(0, -203000, 0, 0);
     const start = performance.now();
@@ -28,7 +37,7 @@ export default class Voxel {
 
     const permutations = new Int32Array(512);
 
-    var random = new Random(6452);
+    const random = new Random(6452);
     for (let i = 0; i < 256; i++)
       permutations[i] = (256 * (random()));
 
@@ -52,7 +61,7 @@ export default class Voxel {
       mappedAtCreation: true,
     });
 
-    var actors = new Float32Array(this.actorsBuffer.getMappedRange());
+    const actors = new Float32Array(this.actorsBuffer.getMappedRange());
     actors.set(this.position);
     this.actorsBuffer.unmap();
 
@@ -88,7 +97,7 @@ export default class Voxel {
       device.queue.writeBuffer(
         this.actorsBuffer,
         Float32Array.BYTES_PER_ELEMENT * 4,
-        this.velocity.buffer
+          (<Float32Array>this.velocity).buffer
       );
 
       const computeEncoder = device.createCommandEncoder();
@@ -113,10 +122,10 @@ export default class Voxel {
           this.actorsReadBuffer.mapAsync(GPUMapMode.READ).then(() => {
             const buffer = this.actorsReadBuffer.getMappedRange();
             const result = new Float32Array(buffer);
-            this.position.set([result[0], result[1], result[2]]);
+            (<Float32Array>this.position).set([result[0], result[1], result[2]]);
             //this.position.set(new Float32Array(buffer, 0, 3));
             this.actorsReadBuffer.unmap();
-            resolve();
+            resolve(null);
           });
         }
       });

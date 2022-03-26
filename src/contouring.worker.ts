@@ -1,18 +1,20 @@
 import { vec3 } from 'gl-matrix';
 import Voxel from './voxel';
 
+const ctx: Worker = self as any;
+
 (async function() {
   const adapter = await navigator.gpu.requestAdapter();
   const device = await adapter.requestDevice();
 
   const voxel = new Voxel();
-  await voxel.init(device, () => {});
+  await voxel.init(device);
 
   console.log('Voxel engine init complete');
   postMessage({ type: 'init_complete' });
 
   const queue = (item) => {
-    device.queue.onSubmittedWorkDone().then(e => {
+    device.queue.onSubmittedWorkDone().then(_ => {
       item.callback();
     })
     
@@ -46,19 +48,7 @@ import Voxel from './voxel';
       console.log('Generating', stride, positionStride, halfWorldSize, x * positionStride - halfWorldSize, y * positionStride - halfWorldSize, z * positionStride - halfWorldSize, x, y, z)
       const { vertices, normals, indices } = await voxel.generate(device, queue, vec3.fromValues(x * positionStride - halfWorldSize, y * positionStride - halfWorldSize, z * positionStride - halfWorldSize), stride);
 
-      //console.log(vertices, normals, indices);
-      
-      // const promise = new Promise(resolve => {
-      //   voxelWorker.onmessage = function(e) {
-      //     resolve(e.data);
-      //   }
-      //   const position = vec3.fromValues(x * 31, y * 31, z * 31);
-      //   voxelWorker.postMessage({ position });
-      // });
-
-      // const { vertices, normals, indices } = await promise;
-
-      postMessage(({ type: 'update', i, ix: x, iy: y, iz: z, x: 0, y: 0, z: 0, vertices: vertices.buffer, normals: normals.buffer, indices: indices.buffer }), [vertices.buffer, normals.buffer, indices.buffer])
+      ctx.postMessage(({ type: 'update', i, ix: x, iy: y, iz: z, x: 0, y: 0, z: 0, vertices: vertices.buffer, normals: normals.buffer, indices: indices.buffer }), [vertices.buffer, normals.buffer, indices.buffer])
       
     }
 
@@ -68,12 +58,5 @@ import Voxel from './voxel';
     generating = false;
 
     console.log(`Generation complete in ${performance.now() - t0} milliseconds`);
-
-    // const { position } = e.data;
-
-    // voxel.generate(device, queue, position)
-    //   .then(({ vertices, normals, indices }) => {
-    //     postMessage(({ vertices, normals, indices }), [vertices.buffer, normals.buffer, indices.buffer])
-    //   });
   }
 })();

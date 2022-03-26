@@ -1,8 +1,7 @@
-import { vec3, vec4 } from 'gl-matrix';
-import ComputeMaterials from './compute-materials.wgsl';
-import ComputeCorners from './compute-corners.wgsl';
-import ComputePositions from './compute-positions.wgsl';
-import ComputeVoxels from './compute-voxels.wgsl';
+import {vec3, vec4} from 'gl-matrix';
+import ComputeCorners from '!!raw-loader!./compute-corners.wgsl';
+import ComputePositions from '!!raw-loader!./compute-positions.wgsl';
+import ComputeVoxels from '!!raw-loader!./compute-voxels.wgsl';
 
 import Random from 'seedrandom';
 import ContourCells from './contouring';
@@ -13,14 +12,14 @@ const generateVertexIndices = (node, vertices, normals, nodeSize) => {
     return;
 
   if (node.size > nodeSize) {
-    if (node.type != 'leaf') {
+    if (node.type !== 'leaf') {
       for (let i = 0; i < 8; i++) {
         generateVertexIndices(node.children[i], vertices, normals, nodeSize);
       }
     }
   }
 
-  if (node.type != 'internal') {
+  if (node.type !== 'internal') {
     const d = node.drawInfo;
     if (d == null) {
       throw "Error! Could not add vertex!";
@@ -35,12 +34,12 @@ const generateVertexIndices = (node, vertices, normals, nodeSize) => {
 const computeVoxels = (position, stride, voxelCount, computedVoxelsData) => {
   const computedVoxels = [];
 
-  if (voxelCount == 0) {
+  if (voxelCount === 0) {
     return { vertices: [], normals: [], indices: [] };
   }
 
   for (let i = 0; i < voxelCount * 12; i += 12) {
-    if (computedVoxelsData[i + 11] != 0) {
+    if (computedVoxelsData[i + 11] !== 0) {
       const leaf = {
         type: 'leaf',
         size: stride,
@@ -75,8 +74,27 @@ const computeVoxels = (position, stride, voxelCount, computedVoxelsData) => {
 
 
 export default class Voxel {
+  private computePipeline: GPUComputePipeline;
+  private computeCornersPipeline: GPUComputePipeline;
+  private uniformBuffer: GPUBuffer;
+  private cornerMaterials: GPUBuffer;
+  private cornerMaterialsRead: GPUBuffer;
+  private voxelMaterialsBuffer: GPUBuffer;
+  private voxelMaterialsBufferRead: GPUBuffer;
+  private cornerIndexBuffer: GPUBuffer;
+  private gpuReadBuffer: GPUBuffer;
+  private permutationsBuffer: GPUBuffer;
+  private voxelsBuffer: GPUBuffer;
+  private actorsBuffer: GPUBuffer;
+  private computeBindGroup: GPUBindGroup;
+  private computeCornersBindGroup: GPUBindGroup;
+  private computePositionsPipeline: GPUComputePipeline;
+  private computePositionsBindGroup: GPUBindGroup;
+  private computeVoxelsPipeline: GPUComputePipeline;
+  private computeVoxelsBindGroup: GPUBindGroup;
+  private voxelReadBuffer: GPUBuffer;
 
-  async init(device, queue) {
+  async init(device: GPUDevice) {
 
     const start = performance.now();
     console.log('Start loading voxel engine', performance.now() - start);
@@ -145,7 +163,7 @@ export default class Voxel {
 
     const permutations = new Int32Array(512);
 
-    var random = new Random(6452);
+    const random = new Random(6452);
     for (let i = 0; i < 256; i++)
       permutations[i] = (256 * (random()));
 
@@ -319,14 +337,14 @@ export default class Voxel {
     console.log('Done', performance.now() - start);
   }
 
-  generate(device, queue, position, stride) {
+  generate(device, queue, position, stride) : Promise<any> {
     if (!stride) stride = 1;
 
-    const promise = new Promise((resolve, reject) => {
+    return new Promise((resolve, _) => {
 
       const permutations = new Int32Array(512);
 
-      var random = new Random('James');
+      const random = new Random('James');
       for (let i = 0; i < 256; i++)
         permutations[i] = (256 * (random()));
 
@@ -334,20 +352,20 @@ export default class Voxel {
         permutations[i] = permutations[i - 256];
 
       device.queue.writeBuffer(
-        this.permutationsBuffer,
-        0,
-        permutations.buffer,
-        permutations.byteOffset,
-        permutations.byteLength
+          this.permutationsBuffer,
+          0,
+          permutations.buffer,
+          permutations.byteOffset,
+          permutations.byteLength
       );
 
       const uniform = vec4.fromValues(position[0], position[1], position[2], stride);
       device.queue.writeBuffer(
-        this.uniformBuffer,
-        0,
-        uniform.buffer,
-        uniform.byteOffset,
-        uniform.byteLength
+          this.uniformBuffer,
+          0,
+          (<Float32Array>uniform).buffer,
+          (<Float32Array>uniform).byteOffset,
+          (<Float32Array>uniform).byteLength
       );
 
       const computeEncoder = device.createCommandEncoder();
@@ -372,50 +390,32 @@ export default class Voxel {
 
       const copyEncoder = device.createCommandEncoder();
       copyEncoder.copyBufferToBuffer(
-        this.cornerIndexBuffer,
-        0,
-        this.gpuReadBuffer,
-        0,
-        Uint32Array.BYTES_PER_ELEMENT
+          this.cornerIndexBuffer,
+          0,
+          this.gpuReadBuffer,
+          0,
+          Uint32Array.BYTES_PER_ELEMENT
       );
 
       copyEncoder.copyBufferToBuffer(
-        this.cornerMaterials,
-        0,
-        this.cornerMaterialsRead,
-        0,
-        Uint32Array.BYTES_PER_ELEMENT * 33 * 33 * 33
+          this.cornerMaterials,
+          0,
+          this.cornerMaterialsRead,
+          0,
+          Uint32Array.BYTES_PER_ELEMENT * 33 * 33 * 33
       );
 
       copyEncoder.copyBufferToBuffer(
-        this.voxelMaterialsBuffer,
-        0,
-        this.voxelMaterialsBufferRead,
-        0,
-        Uint32Array.BYTES_PER_ELEMENT * 32 * 32 * 32
+          this.voxelMaterialsBuffer,
+          0,
+          this.voxelMaterialsBufferRead,
+          0,
+          Uint32Array.BYTES_PER_ELEMENT * 32 * 32 * 32
       );
 
       queue({
         items: [computeEncoder.finish(), copyEncoder.finish()],
         callback: () => {
-          // this.voxelMaterialsBufferRead.mapAsync(GPUMapMode.READ).then(() => {
-          //   const result = new Uint32Array(this.voxelMaterialsBufferRead.getMappedRange());
-          //   let count = 0;
-          //   let count2 = 0;
-          //   const size = 32;
-          //   for (let x = 0; x < size; x++)
-          //   for (let y = 0; y < size; y++)
-          //   for (let z = 0; z < size; z++) {
-          //     count2++;
-          //     if (result[z * size * size + y * size + x] != 255 && result[z * size * size + y * size + x] != 0) {
-          //       console.log(x, y, z, result[z * size * size + y * size + x], count2);
-          //       count++;
-          //     }
-          //   }
-          //   console.log('Count', count);
-          //   this.voxelMaterialsBufferRead.unmap();
-          // });
-
           this.gpuReadBuffer.mapAsync(GPUMapMode.READ).then(() => {
 
             const arrayBuffer = this.gpuReadBuffer.getMappedRange();
@@ -424,7 +424,7 @@ export default class Voxel {
             this.gpuReadBuffer.unmap();
 
             if (voxelCount === 0) {
-              resolve({ vertices: new Float32Array(), normals: new Float32Array(), indices: new Uint16Array()});
+              resolve({vertices: new Float32Array(), normals: new Float32Array(), indices: new Uint16Array()});
               return;
             }
 
@@ -438,11 +438,11 @@ export default class Voxel {
 
             const copyEncoder = device.createCommandEncoder();
             copyEncoder.copyBufferToBuffer(
-              this.voxelsBuffer,
-              0,
-              this.voxelReadBuffer,
-              0,
-              Float32Array.BYTES_PER_ELEMENT * voxelCount * 12
+                this.voxelsBuffer,
+                0,
+                this.voxelReadBuffer,
+                0,
+                Float32Array.BYTES_PER_ELEMENT * voxelCount * 12
             );
 
 
@@ -466,7 +466,5 @@ export default class Voxel {
         }
       });
     });
-
-    return promise;
   }
 }
