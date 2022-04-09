@@ -43,6 +43,12 @@ async function init(canvas) {
     const aspect = Math.abs(canvas.width / canvas.height);
     mat4.perspective(projectionMatrix, (2 * Math.PI) / 5, aspect, 1, (1 << 16) * 32);
 
+    context.configure({
+      device,
+      format: presentationFormat,
+      compositingAlphaMode: 'opaque'
+    });
+
     depthTexture = device.createTexture({
       size: { width: canvas.width, height: canvas.height },
       format: 'depth24plus-stencil8',
@@ -54,7 +60,7 @@ async function init(canvas) {
 
   let lastTimestamp: number;
   return (timestamp: number) => {
-    const delta = lastTimestamp - timestamp;
+    const delta = timestamp - lastTimestamp;
 
     const commandEncoder = device.createCommandEncoder();
     const textureView = context.getCurrentTexture().createView();

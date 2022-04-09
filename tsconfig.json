@@ -9,6 +9,7 @@
     "moduleResolution": "node",
     "typeRoots": [ "./node_modules/@webgpu/types", "./node_modules/@types"],
     "allowSyntheticDefaultImports": true,
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "sourceMap": true
   }
 }
