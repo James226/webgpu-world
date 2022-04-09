@@ -19,7 +19,8 @@ async function init(canvas) {
 
   context.configure({
     device,
-    format: presentationFormat
+    format: presentationFormat,
+    compositingAlphaMode: 'opaque'
   });
 
   const game = new Game();
@@ -33,6 +34,7 @@ async function init(canvas) {
     format: 'depth24plus-stencil8',
     usage: GPUTextureUsage.RENDER_ATTACHMENT,
   });
+
 
   const resize = () => {
     canvas.width = window.innerWidth;

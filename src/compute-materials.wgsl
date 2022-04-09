@@ -3,19 +3,19 @@ let octreeSize: u32 = 32u;
 let width: u32 = 33u;
 
 struct Permutations {
-  Perm : array<i32, 512>;
+  Perm : array<i32, 512>,
 };
 @binding(0) @group(0) var<storage, read> perm : Permutations;
 
 struct CornerMaterials {
-  cornerMaterials : array<u32>;
+  cornerMaterials : array<u32>,
 };
 
 @binding(1) @group(0) var<storage, read_write> cornerMaterials: CornerMaterials;
 
 struct UniformBufferObject {
-  chunkPosition : vec3<f32>;
-  stride : f32;
+  chunkPosition : vec3<f32>,
+  stride : f32,
 };
 @binding(5) @group(0) var<uniform> uniforms : UniformBufferObject;
 

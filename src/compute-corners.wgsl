@@ -1,12 +1,12 @@
 let OctreeSize: u32 = 32u;
 
 struct CornerMaterials {
-  cornerMaterials : array<u32>;
+  cornerMaterials : array<u32>
 };
 @binding(1) @group(0) var<storage, read> cornerMaterials: CornerMaterials;
 
 struct VoxelMaterials {
-  voxelMaterials : array<u32>;
+  voxelMaterials : array<u32>
 };
 @binding(2) @group(0) var<storage, read_write> voxelMaterials: VoxelMaterials;
 

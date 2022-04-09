@@ -1,11 +1,11 @@
 struct VoxelMaterials {
-  voxelMaterials : array<u32>;
+  voxelMaterials : array<u32>,
 };
 @binding(2) @group(0) var<storage, read> voxelMaterials: VoxelMaterials;
 
 struct CornerIndex {
-  cornerCount : u32;
-  cornerIndexes : array<u32>;
+  cornerCount : u32,
+  cornerIndexes : array<u32>,
 };
 @binding(3) @group(0) var<storage, read_write> cornerIndex: CornerIndex;
 
