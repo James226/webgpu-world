@@ -1,5 +1,3 @@
-let width: u32 = 33u;
-
 struct Permutations {
   Perm : array<i32, 512>,
 };
@@ -46,7 +44,8 @@ var<storage, read_write> voxels: GPUVOXS;
 
 struct UniformBufferObject {
   chunkPosition : vec3<f32>,
-  stride : f32
+  stride : f32,
+	width: u32
 };
 
 @binding(5) @group(0)
@@ -456,43 +455,7 @@ fn qef_solve() -> vec4<f32>
 	return vec4<f32>(r.x, r.y, r.z, error);
 }
 
-
-fn getDensity(worldPosition: vec3<f32>) -> f32 {
-	var floor: f32 = 1.0;
-
-	//return min(Box(worldPosition, vec3<f32>(20000.0, 0.0, 0.0), vec3<f32>(10000.0, 10000.0, 10000.0)), Sphere(worldPosition, vec3<f32>(0.0, 0.0, 0.0), 10000.0));
-	var worldRadius: f32 = 100.0;
-	var world: vec3<f32> = worldPosition - vec3<f32>(0.0, 0.0, 0.0);
-	var worldDist: f32 = clamp(-worldRadius + length(world), -1000.0, 1000.0);
-
-	let flatlandNoiseScale: f32 = 3.0;
-	let flatlandLerpAmount: f32 = 0.07;
-	let flatlandYPercent: f32 = 1.2;
-
-	let rockyNoiseScale: f32 = 3.0;
-	let rockyLerpAmount: f32 = 0.05;
-	let rockyYPercent: f32 = 0.7;
-	
-	let maxMountainMixLerpAmount: f32 = 0.075;
-	let minMountainMixLerpAmount: f32 = 1.0;
-	
-	let rockyBlend: f32 = 1.0;
-	
-	//let mountainBlend: f32 = clamp(abs(FractalNoise1(0.5343, 2.2324, 0.68324, world)) * 4.0, 0.0, 1.0);
-	let mountainBlend: f32 = 0.0;
-	
-	//let mountain: f32 = CalculateNoiseValue(world, 0.07);
-	let mountain: f32 = 0.0;
-
-	var blob: f32 = CalculateNoiseValue(world, flatlandNoiseScale + ((rockyNoiseScale - flatlandNoiseScale) * rockyBlend));
-	//var blob: f32 = 0.0;
-	blob = CLerp(blob, (worldDist) * (flatlandYPercent + ((rockyYPercent - flatlandYPercent) * rockyBlend)),
-				flatlandLerpAmount + ((rockyLerpAmount - flatlandLerpAmount) * rockyBlend));
-	
-	var result: f32 = ((worldDist) / worldRadius) + CLerp(mountain, blob, minMountainMixLerpAmount + ((maxMountainMixLerpAmount - minMountainMixLerpAmount) * mountainBlend));
-
-	return max(result, -Sphere(worldPosition, vec3<f32>(50.0, 50.0, 50.0), 50.0));
-}
+%GET_DENSITY%
 
 fn ApproximateZeroCrossingPosition(p0: vec3<f32>, p1: vec3<f32>) -> vec3<f32>
 {
@@ -522,7 +485,7 @@ fn ApproximateZeroCrossingPosition(p0: vec3<f32>, p1: vec3<f32>) -> vec3<f32>
 
 fn CalculateSurfaceNormal(p: vec3<f32>) -> vec3<f32>
 {
-	let H: f32 = 0.1;
+	let H: f32 = uniforms.stride; // This needs to scale based on something...
 	let dx: f32 = getDensity(p + vec3<f32>(H, 0.0, 0.0)) - getDensity(p - vec3<f32>(H, 0.0, 0.0));
 	let dy: f32 = getDensity(p + vec3<f32>(0.0, H, 0.0)) - getDensity(p - vec3<f32>(0.0, H, 0.0));
 	let dz: f32 = getDensity(p + vec3<f32>(0.0, 0.0, H)) - getDensity(p - vec3<f32>(0.0, 0.0, H));
@@ -617,6 +580,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
 @stage(compute) @workgroup_size(1)
 fn computeMaterials(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
+		let width = uniforms.width;
     let index: u32 = GlobalInvocationID.z * width * width + GlobalInvocationID.y * width + GlobalInvocationID.x;
     let cornerPos: vec3<f32> = vec3<f32>(f32(GlobalInvocationID.x) * uniforms.stride, f32(GlobalInvocationID.y) * uniforms.stride, f32(GlobalInvocationID.z) * uniforms.stride);
 

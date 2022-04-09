@@ -21,11 +21,12 @@ const configureRenderer = () => {
 
 
 renderer.init(canvas).then(async () => {
-  configureRenderer();
 
   window.addEventListener('resize', configureRenderer, false);
 
   await game.init(renderer.device);
+
+  configureRenderer();
 
   const doFrame = (timestamp: number) => {
     game.update(renderer.device, projectionMatrix, timestamp);

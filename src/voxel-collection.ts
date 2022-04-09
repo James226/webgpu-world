@@ -20,7 +20,7 @@ export default class VoxelCollection {
   async init(device) {
 
     const img = document.createElement('img');
-    img.src = 'grass.jpg';
+    img.src = 'rock.jpg';
     await img.decode();
     const imageBitmap = await createImageBitmap(img);
 

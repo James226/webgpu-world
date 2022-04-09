@@ -16,7 +16,7 @@ export default class Controller {
     this.keyboard = keyboard;
 
     this.viewMatrix = mat4.create();
-    this.position = vec3.fromValues(0, 0.0, -228.0);
+    this.position = vec3.fromValues(0, 100.0, -100.0);
     this.velocity = vec3.fromValues(0,0,0);
     this.rotation = vec3.fromValues(0, 0, 0);
 
@@ -48,6 +48,15 @@ export default class Controller {
       velocity[0] -= distance;
     }
 
+
+    if (this.keyboard.keydown('r')) {
+      velocity[1] += distance;
+    }
+
+    if (this.keyboard.keydown('f')) {
+      velocity[1] -= distance;
+    }
+
     vec3.add(this.position, this.position, velocity);
     this.velocity = velocity;
 
@@ -69,8 +78,9 @@ export default class Controller {
 
     mat4.lookAt(this.viewMatrix,
         this.position,
-        vec3.add(vec3.create(), this.position, vec3.fromValues(0.0, 0.0, 1.0)),
+        vec3.add(vec3.create(), this.position, vec3.fromValues(0.0, -1.0, .5)),
         vec3.fromValues(0.0, 1.0, 0.0));
+        
 
     const inverted = mat4.invert(mat4.create(), this.viewMatrix);
     vec3.normalize(this.right, <vec3> inverted.slice(0, 3));

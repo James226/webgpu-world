@@ -2,6 +2,7 @@ import {vec3, vec4} from 'gl-matrix';
 import ComputeCorners from '!!raw-loader!./compute-corners.wgsl';
 import ComputePositions from '!!raw-loader!./compute-positions.wgsl';
 import ComputeVoxels from '!!raw-loader!./compute-voxels.wgsl';
+import Density from '!!raw-loader!./density.wgsl';
 
 import Random from 'seedrandom';
 import ContourCells from './contouring';
@@ -95,13 +96,13 @@ export default class Voxel {
   private voxelReadBuffer: GPUBuffer;
 
   async init(device: GPUDevice) {
-
+    const computeVoxelsCode = ComputeVoxels.replace("%GET_DENSITY%", Density);
     const start = performance.now();
     console.log('Start loading voxel engine', performance.now() - start);
     this.computePipeline = await device.createComputePipelineAsync({
       compute: {
         module: device.createShaderModule({
-          code: ComputeVoxels,
+          code: computeVoxelsCode,
         }),
         entryPoint: 'computeMaterials',
       },
@@ -118,7 +119,7 @@ export default class Voxel {
       },
     });
 
-    const uniformBufferSize = 4 * 4;
+    const uniformBufferSize = 4 * 5;
     this.uniformBuffer = device.createBuffer({
       size: uniformBufferSize,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
@@ -276,7 +277,7 @@ export default class Voxel {
     console.log('31', performance.now() - start);
 
     const module = device.createShaderModule({
-      code: ComputeVoxels,
+      code: computeVoxelsCode,
     });
 
     console.log('31.5', performance.now() - start);
@@ -359,13 +360,19 @@ export default class Voxel {
           permutations.byteLength
       );
 
-      const uniform = vec4.fromValues(position[0], position[1], position[2], stride);
+      var buffer = new ArrayBuffer(4 * 5);
+      const uniform = new Float32Array(buffer, 0, 4);
+      uniform.set(position, 0);
+      uniform[3] = stride;
+
+      new Uint32Array(buffer, 16, 1)[0] = 33;
+
       device.queue.writeBuffer(
           this.uniformBuffer,
           0,
-          (<Float32Array>uniform).buffer,
-          (<Float32Array>uniform).byteOffset,
-          (<Float32Array>uniform).byteLength
+          buffer,
+          0,
+          buffer.byteLength
       );
 
       const computeEncoder = device.createCommandEncoder();

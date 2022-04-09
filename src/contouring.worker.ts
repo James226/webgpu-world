@@ -31,7 +31,7 @@ const ctx: Worker = self as any;
     }
     generating = true;
     const { stride } = e.data;
-    const size = 8;
+    const size = 128;
     console.log(`World Size: ${size} (${size * 32})`);
     const chunkSize = 31;
     const worldSize =  Math.ceil(size / stride);
@@ -41,14 +41,13 @@ const ctx: Worker = self as any;
     let i = 0;
     const halfWorldSize = (size * chunkSize / 2);
     for (let x = 0; x < worldSize; x++)
-    for (let y = 0; y < worldSize; y++)
+    for (let y = 0; y < 1; y++)
     for (let z = 0; z < worldSize; z++) {
       i = x + (y * worldSize) + (z * worldSize * worldSize);
 
       const positionStride = (chunkSize * stride);
-      console.log('Generating', stride, positionStride, halfWorldSize, x * positionStride - halfWorldSize, y * positionStride - halfWorldSize, z * positionStride - halfWorldSize, x, y, z)
-      const { vertices, normals, indices } = await voxel.generate(device, queue, vec3.fromValues(x * positionStride - halfWorldSize, y * positionStride - halfWorldSize, z * positionStride - halfWorldSize), stride);
-
+      console.log('Generating', stride, positionStride, halfWorldSize, x * positionStride - halfWorldSize, -32, z * positionStride - halfWorldSize, x, y, z)
+      const { vertices, normals, indices } = await voxel.generate(device, queue, vec3.fromValues(x * positionStride - halfWorldSize, -32, z * positionStride - halfWorldSize), stride);
       ctx.postMessage(({ type: 'update', i, ix: x, iy: y, iz: z, x: 0, y: 0, z: 0, vertices: vertices.buffer, normals: normals.buffer, indices: indices.buffer }), [vertices.buffer, normals.buffer, indices.buffer])
       
     }
