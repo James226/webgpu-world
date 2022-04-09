@@ -3,7 +3,7 @@ const path = require('path');
 module.exports = {
   mode: 'development',
   entry: {
-    main: './src/renderer.ts',
+    main: './src/index.ts',
     tests: './src/tests.ts',
   },
   output: {

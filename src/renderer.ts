@@ -1,69 +1,34 @@
-import {mat4} from 'gl-matrix';
-import Game from './game';
-import {QueueItem} from "./queueItem";
+export default class Renderer {
+  private context: GPUCanvasContext;
+  device: GPUDevice;
+  private presentationFormat: GPUTextureFormat
+  private depthTexture: GPUTexture
 
-async function init(canvas) {
-  const adapter = await navigator.gpu.requestAdapter();
-  const device = await adapter.requestDevice();
+  async init(canvas: HTMLCanvasElement) {
+    const adapter = await navigator.gpu.requestAdapter();
+    this.device = await adapter.requestDevice();
 
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+    this.context = canvas.getContext('webgpu');
+    this.presentationFormat = this.context.getPreferredFormat(adapter);
+  }
 
-  const aspect = Math.abs(canvas.width / canvas.height);
-  const projectionMatrix = mat4.create();
-  mat4.perspective(projectionMatrix, (2 * Math.PI) / 5, aspect, 1, (1 << 20) * 32);
-
-
-  const context = canvas.getContext('webgpu');
-  const presentationFormat = context.getPreferredFormat(adapter);
-
-  context.configure({
-    device,
-    format: presentationFormat,
-    compositingAlphaMode: 'opaque'
-  });
-
-  const game = new Game();
-
-  const queue: QueueItem[] = [];
-
-  await game.init(device);
-
-  let depthTexture = device.createTexture({
-    size: { width: canvas.width, height: canvas.height },
-    format: 'depth24plus-stencil8',
-    usage: GPUTextureUsage.RENDER_ATTACHMENT,
-  });
-
-
-  const resize = () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const aspect = Math.abs(canvas.width / canvas.height);
-    mat4.perspective(projectionMatrix, (2 * Math.PI) / 5, aspect, 1, (1 << 16) * 32);
-
-    context.configure({
-      device,
-      format: presentationFormat,
+  configure(width: number, height: number) {
+    this.context.configure({
+      device: this.device,
+      format: this.presentationFormat,
       compositingAlphaMode: 'opaque'
     });
 
-    depthTexture = device.createTexture({
-      size: { width: canvas.width, height: canvas.height },
+    this.depthTexture = this.device.createTexture({
+      size: { width, height },
       format: 'depth24plus-stencil8',
       usage: GPUTextureUsage.RENDER_ATTACHMENT,
     });
-  };
+  }
 
-  window.addEventListener('resize', resize, false);
-
-  let lastTimestamp: number;
-  return (timestamp: number) => {
-    const delta = timestamp - lastTimestamp;
-
-    const commandEncoder = device.createCommandEncoder();
-    const textureView = context.getCurrentTexture().createView();
+  render(callback: (GPURenderPassDescriptor) => void) {
+    const commandEncoder = this.device.createCommandEncoder();
+    const textureView = this.context.getCurrentTexture().createView();
 
     const renderPassDescriptor: GPURenderPassDescriptor = {
       colorAttachments: [
@@ -75,7 +40,7 @@ async function init(canvas) {
         }
       ],
       depthStencilAttachment: {
-        view: depthTexture.createView(),
+        view: this.depthTexture.createView(),
 
         depthClearValue: 1.0,
         depthLoadOp: 'clear',
@@ -87,36 +52,11 @@ async function init(canvas) {
       }
     };
 
-    game.update(device, projectionMatrix, delta, queue);
-
     const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
-    game.draw(passEncoder);
+    callback(passEncoder);
     passEncoder.end();
 
-    const item = queue.shift();
-
-    device.queue.onSubmittedWorkDone().then(_ => {
-      if (item) {
-        item.callback();
-      }
-    })
-
-    if (item) {
-      device.queue.submit([commandEncoder.finish(), ...item.items]);
-    } else {
-      device.queue.submit([commandEncoder.finish()]);
-    }
-
-    lastTimestamp = timestamp;
-  };
+    this.device.queue.submit([commandEncoder.finish()]);
+  }
 }
 
-const canvas = document.getElementById('canvas');
-
-init(canvas).then((frame) => {
-  const doFrame = (timestamp: number) => {
-    frame(timestamp);
-    requestAnimationFrame(doFrame);
-  };
-  requestAnimationFrame(doFrame);
-});

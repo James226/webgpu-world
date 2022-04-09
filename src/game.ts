@@ -4,7 +4,6 @@ import Keyboard from './keyboard';
 import VoxelCollection from './voxel-collection';
 import Physics from './physics';
 import {mat4, vec3} from "gl-matrix";
-import {QueueItem} from './queueItem';
 
 class Game {
   private loaded: boolean;
@@ -83,7 +82,7 @@ class Game {
       console.log(`Generation complete in ${performance.now() - t0} milliseconds`);
   }
 
-  update(device: GPUDevice, projectionMatrix: mat4, timestamp: number, queue: QueueItem[]) {
+  update(device: GPUDevice, projectionMatrix: mat4, timestamp: number) {
     if (this.keyboard.keypress('g')) {
       this.generate(device);
     }

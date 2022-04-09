@@ -8,7 +8,7 @@ import 'jasmine-core/lib/jasmine-core/boot1.js'
 const tests = require.context(
     "./", // context folder
     true, // include subdirectories
-    /.test.js$/ // RegExp
+    /.test.(j|t)s$/ // RegExp
 );
 
 const testFiles = tests.keys();
