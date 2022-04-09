@@ -2,27 +2,30 @@ let width: u32 = 33u;
 
 struct Permutations {
   Perm : array<i32, 512>;
-}
+};
+
 @binding(0) @group(0)
 var<storage, read> perm : Permutations;
 
 struct CornerMaterials {
   cornerMaterials : array<u32>;
-}
+};
 
 @binding(1) @group(0)
 var<storage, read_write> cornerMaterials: CornerMaterials;
 
 struct VoxelMaterials {
   voxelMaterials : array<u32>;
-}
+};
+
 @binding(2) @group(0)
 var<storage, read_write> voxelMaterials: VoxelMaterials;
 
 struct CornerIndex {
   cornerCount : u32;
   cornerIndexes : array<u32>;
-}
+};
+
 @binding(3) @group(0)
 var<storage, read_write> cornerIndex: CornerIndex;
 
@@ -36,25 +39,29 @@ struct GPUVOX
 };
 struct GPUVOXS {
   voxels : array<GPUVOX>;
-}
+};
+
 @binding(4) @group(0)
 var<storage, read_write> voxels: GPUVOXS;
 
 struct UniformBufferObject {
   chunkPosition : vec3<f32>;
   stride : f32;
-}
+};
+
 @binding(5) @group(0)
 var<uniform> uniforms : UniformBufferObject;
 
 struct Actor {
   position: vec3<f32>;
   velocity: vec3<f32>;
-}
+};
+
 
 struct Physics {
   actors: array<Actor>;
-}
+};
+
 @binding(6) @group(0)
 var<storage, read_write> physics : Physics;
 
@@ -451,20 +458,18 @@ fn qef_solve() -> vec4<f32>
 
 
 fn getDensity(worldPosition: vec3<f32>) -> f32 {
-	var floor: f32 = 100.0;
-	// if (worldPosition.y < 0.0) {
-	// 	floor = -100.0;
-	// }
+	var floor: f32 = 1.0;
+
 	//return min(Box(worldPosition, vec3<f32>(20000.0, 0.0, 0.0), vec3<f32>(10000.0, 10000.0, 10000.0)), Sphere(worldPosition, vec3<f32>(0.0, 0.0, 0.0), 10000.0));
-	var worldRadius: f32 = 200000.0;
+	var worldRadius: f32 = 100.0;
 	var world: vec3<f32> = worldPosition - vec3<f32>(0.0, 0.0, 0.0);
 	var worldDist: f32 = clamp(-worldRadius + length(world), -1000.0, 1000.0);
 
-	let flatlandNoiseScale: f32 = 300.0;
+	let flatlandNoiseScale: f32 = 3.0;
 	let flatlandLerpAmount: f32 = 0.07;
 	let flatlandYPercent: f32 = 1.2;
 
-	let rockyNoiseScale: f32 = 300.0;
+	let rockyNoiseScale: f32 = 3.0;
 	let rockyLerpAmount: f32 = 0.05;
 	let rockyYPercent: f32 = 0.7;
 	
@@ -485,7 +490,8 @@ fn getDensity(worldPosition: vec3<f32>) -> f32 {
 				flatlandLerpAmount + ((rockyLerpAmount - flatlandLerpAmount) * rockyBlend));
 	
 	var result: f32 = ((worldDist) / worldRadius) + CLerp(mountain, blob, minMountainMixLerpAmount + ((maxMountainMixLerpAmount - minMountainMixLerpAmount) * mountainBlend));
-	return result;
+
+	return max(result, -Sphere(worldPosition, vec3<f32>(50.0, 50.0, 50.0), 50.0));
 }
 
 fn ApproximateZeroCrossingPosition(p0: vec3<f32>, p1: vec3<f32>) -> vec3<f32>

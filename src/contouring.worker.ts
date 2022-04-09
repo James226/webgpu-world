@@ -31,7 +31,7 @@ const ctx: Worker = self as any;
     }
     generating = true;
     const { stride } = e.data;
-    const size = 1 << 14;
+    const size = 8;
     console.log(`World Size: ${size} (${size * 32})`);
     const chunkSize = 31;
     const worldSize =  Math.ceil(size / stride);

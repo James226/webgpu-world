@@ -16,7 +16,7 @@ export default class Voxel {
 
   async init(device: GPUDevice) {
     this.velocity = vec3.fromValues(0,0,0);
-    this.position = vec4.fromValues(0, -203000, 0, 0);
+    this.position = vec4.fromValues(0, 0, -228, 0);
     const start = performance.now();
     console.log('Loading physics engine');
     this.computePipeline = await device.createComputePipelineAsync({

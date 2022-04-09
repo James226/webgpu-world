@@ -45,7 +45,7 @@ class Game {
       }
     }
 
-    this.stride = 1 << 14;
+    this.stride = 8;
     console.log(this.stride);
   }
 
@@ -88,10 +88,10 @@ class Game {
       this.generate(device);
     }
 
-    this.physics.velocity = this.controller.velocity;
-    this.physics.update(device, (q: QueueItem) => queue.push(q));
+    //this.physics.velocity = this.controller.velocity;
+    //this.physics.update(device, (q: QueueItem) => queue.push(q));
 
-    this.controller.position = this.physics.position as vec3;
+    //this.controller.position = this.physics.position as vec3;
     this.controller.update(device, projectionMatrix, timestamp);
 
     const viewMatrix = this.controller.viewMatrix;
