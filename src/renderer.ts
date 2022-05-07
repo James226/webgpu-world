@@ -59,4 +59,3 @@ export default class Renderer {
     this.device.queue.submit([commandEncoder.finish()]);
   }
 }
-

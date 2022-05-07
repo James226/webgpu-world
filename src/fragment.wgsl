@@ -9,11 +9,11 @@ fn getTriPlanarBlend(_wNorm: vec3<f32>) -> vec3<f32> {
   blending.z = max(blending.z, 0.00001);
 	blending = normalize(blending); // Force weights to sum to 1.0
 	let b = (blending.x + blending.y + blending.z);
-	blending /= vec3<f32>(b, b, b);
+	blending = blending / vec3<f32>(b, b, b);
 	return blending;
 }
 
-let normalRepeat = 0.01;
+let normalRepeat = 0.02;
 
 let lower = 20.0;
 let upper = 49.0;

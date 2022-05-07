@@ -6,13 +6,13 @@ import VoxelObject from './voxel-object';
 const swapChainFormat = 'bgra8unorm';
 
 export default class VoxelCollection {
-  private readonly objects: Map<any, VoxelObject>;
+  public readonly objects: Map<any, VoxelObject>;
   private readonly pool: VoxelObject[];
   private uniformBindGroup: GPUBindGroup;
   private pipeline: GPURenderPipeline;
 
-  constructor() {
-    this.objects = new Map<any, VoxelObject>();
+  constructor(objects: Map<any, VoxelObject> = new Map<any, VoxelObject>()) {
+    this.objects = objects;
     this.pool = [];
   }
 
@@ -84,74 +84,82 @@ export default class VoxelCollection {
       bindGroupLayouts: [uniformLayout, bindGroupLayout],
     });
 
-    this.pipeline = device.createRenderPipeline({
-      layout: pipelineLayout,
+    const buildPipeline = () => {
+      this.pipeline = device.createRenderPipeline({
+        layout: pipelineLayout,
 
-      vertex: {
-        module:
-          device.createShaderModule({
-            code: VertexShader,
-          }),
-        buffers: [
+        vertex: {
+          module:
+              device.createShaderModule({
+                code: VertexShader,
+              }),
+          buffers: [
+            {
+              arrayStride: 4 * 10,
+              attributes: [
+                {
+                  // position
+                  shaderLocation: 0,
+                  offset: 0,
+                  format: 'float32x4',
+                },
+                {
+                  // color
+                  shaderLocation: 1,
+                  offset: 4 * 4,
+                  format: 'float32x4',
+                },
+              ],
+            },
+          ],
+          entryPoint: 'main',
+        },
+        fragment: {
+          module:
+              device.createShaderModule({
+                code: FragmentShader
+              }),
+          entryPoint: 'main',
+          targets: [
+            {
+              format: swapChainFormat,
+            },
+          ]
+        },
+
+        primitive: {
+          topology: 'triangle-list',
+          cullMode: 'back',
+        },
+        depthStencil: {
+          depthWriteEnabled: true,
+          depthCompare: 'less',
+          format: 'depth24plus-stencil8',
+        },
+      });
+
+      this.uniformBindGroup = device.createBindGroup({
+        layout: this.pipeline.getBindGroupLayout(1),
+        entries: [
           {
-            arrayStride: 4 * 10,
-            attributes: [
-              {
-                // position
-                shaderLocation: 0,
-                offset: 0,
-                format: 'float32x4',
-              },
-              {
-                // color
-                shaderLocation: 1,
-                offset: 4 * 4,
-                format: 'float32x4',
-              },
-            ],
+            binding: 0,
+            resource: sampler,
+          },
+          {
+            binding: 1,
+            resource: cubeTexture.createView(),
           },
         ],
-        entryPoint: 'main',
-      },
-      fragment: {
-        module:
-          device.createShaderModule({
-            code: FragmentShader
-          }),
-        entryPoint: 'main',
-        targets: [
-          {
-            format: swapChainFormat,
-          },
-        ]
-      },
+      });
+    };
 
-      primitive: {
-        topology: 'triangle-list',
-        cullMode: 'back',
-      },
-      depthStencil: {
-        depthWriteEnabled: true,
-        depthCompare: 'less',
-        format: 'depth24plus-stencil8',
-      },
-    });
+    buildPipeline();
 
-    
-
-    this.uniformBindGroup = device.createBindGroup({
-      layout: this.pipeline.getBindGroupLayout(1),
-      entries: [
-        {
-          binding: 0,
-          resource: sampler,
-        },
-        {
-          binding: 1,
-          resource: cubeTexture.createView(),
-        },
-      ],
-    });
+    if (module.hot) {
+      module.hot.accept(['./fragment.wgsl'], (a) => {
+        buildPipeline();
+      });
+    }
   }
 
   set(device, key, position, vertices, normals, indices) {

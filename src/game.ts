@@ -31,6 +31,14 @@ class Game {
     this.collection = new VoxelCollection();
     await this.collection.init(device);
 
+    if (module.hot) {
+      module.hot.accept(['./voxel-collection.ts'], async (a) => {
+        const collection = new VoxelCollection(this.collection.objects);
+        await collection.init(device);
+        this.collection = collection;
+      });
+    }
+
     this.generating = false;
 
     this.voxelWorker = new ContouringWorker();

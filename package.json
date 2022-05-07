@@ -4,13 +4,14 @@
   "description": "",
   "private": true,
   "scripts": {
-    "start": "webpack serve",
+    "start": "webpack serve --hot",
     "build": "webpack"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@types/jasmine": "^4.0.2",
+    "@types/webpack-env": "^1.16.4",
     "css-loader": "^6.7.1",
     "jasmine-core": "^4.0.1",
     "raw-loader": "^4.0.2",
