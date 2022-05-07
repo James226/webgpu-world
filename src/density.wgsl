@@ -1,19 +1,20 @@
 let freq = 0.001;
 
 fn getDensity(worldPosition: vec3<f32>) -> f32 {
-	var floor: f32 = Perlin(worldPosition.x * freq, worldPosition.y * freq, worldPosition.z * freq) * 10.0;
+	var floor: f32 = FractalNoise(1, 0.7343, 1.0, 1.0, worldPosition) * 4.0 - 1.0;
 
-  // if (worldPosition.y < 0.0) {
-  //   floor = -1.0;
-  // }
+  floor = max(-Sphere(worldPosition, vec3<f32>(0.0, 0.0, 0.0), 400.0), floor);
+
+  if (worldPosition.y < 0.0) {
+    floor = -1.0;
+  }
   
   if (worldPosition.y > 50.0) {
     floor = 1.0;
   }
 
 
-  floor = min(Box(worldPosition, vec3<f32>(0.0, 0.0, 0.0), vec3<f32>(5.0, 50.0, 50.0)), floor);
-  floor = min(Box(worldPosition, vec3<f32>(50.0, 0.0, 0.0), vec3<f32>(20.0, 50.0, 10.0)), floor);
+  floor = min(Sphere(worldPosition, vec3<f32>(0.0, 0.0, 25.0), 50.0), floor);
 
   return floor;
 

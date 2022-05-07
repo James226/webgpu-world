@@ -44,7 +44,7 @@ class Game {
       }
     }
 
-    this.stride = 8;
+    this.stride = 16;
     console.log(this.stride);
   }
 

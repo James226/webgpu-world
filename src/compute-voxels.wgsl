@@ -126,12 +126,14 @@ fn Perlin(x1: f32, y1: f32, z1: f32) -> f32
 	} else {
 		X = i32(x1) - 1;
 	}
+
 	var Y: i32 = 0;
 	if (y1 > 0.0) {
 		Y = i32(y1);
 	} else {
 		Y = i32(y1) - 1;
 	}
+
 	var Z: i32 = 0;
 	if (z1 > 0.0) {
 		Z = i32(z1);
@@ -147,14 +149,14 @@ fn Perlin(x1: f32, y1: f32, z1: f32) -> f32
 	Y = Y & 255;
 	Z = Z & 255;
 	
-	let gi000: i32 = i32(perm.Perm[X + perm.Perm[Y + perm.Perm[Z]]] % 12);
-	let gi001: i32 = i32(perm.Perm[X + perm.Perm[Y + perm.Perm[Z + 1]]] % 12);
-	let gi010: i32 = i32(perm.Perm[X + perm.Perm[Y + 1 + perm.Perm[Z]]] % 12);
-	let gi011: i32 = i32(perm.Perm[X + perm.Perm[Y + 1 + perm.Perm[Z + 1]]] % 12);
-	let gi100: i32 = i32(perm.Perm[X + 1 + perm.Perm[Y + perm.Perm[Z]]] % 12);
-	let gi101: i32 = i32(perm.Perm[X + 1 + perm.Perm[Y + perm.Perm[Z + 1]]] % 12);
-	let gi110: i32 = i32(perm.Perm[X + 1 + perm.Perm[Y + 1 + perm.Perm[Z]]] % 12);
-	let gi111: i32 = i32(perm.Perm[X + 1 + perm.Perm[Y + 1 + perm.Perm[Z + 1]]] % 12);
+	let gi000: i32 = (perm.Perm[X + perm.Perm[Y + perm.Perm[Z]]] % 12);
+	let gi001: i32 = (perm.Perm[X + perm.Perm[Y + perm.Perm[Z + 1]]] % 12);
+	let gi010: i32 = (perm.Perm[X + perm.Perm[Y + 1 + perm.Perm[Z]]] % 12);
+	let gi011: i32 = (perm.Perm[X + perm.Perm[Y + 1 + perm.Perm[Z + 1]]] % 12);
+	let gi100: i32 = (perm.Perm[X + 1 + perm.Perm[Y + perm.Perm[Z]]] % 12);
+	let gi101: i32 = (perm.Perm[X + 1 + perm.Perm[Y + perm.Perm[Z + 1]]] % 12);
+	let gi110: i32 = (perm.Perm[X + 1 + perm.Perm[Y + 1 + perm.Perm[Z]]] % 12);
+	let gi111: i32 = (perm.Perm[X + 1 + perm.Perm[Y + 1 + perm.Perm[Z + 1]]] % 12);
 	
 	let n000: f32 = dot(Grad3[gi000], vec3<f32>(x, y, z));
 	let n100: f32 = dot(Grad3[gi100], vec3<f32>(x - 1.0, y, z));
@@ -219,7 +221,6 @@ fn FractalNoise1(frequency: f32, lacunarity: f32, persistence: f32, position: ve
 	
 	return nois;
 }
-
 
 fn CalculateNoiseValue(pos: vec3<f32>, scale: f32) -> f32
 {
