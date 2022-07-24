@@ -1,5 +1,6 @@
-import { mat4, vec3 } from "gl-matrix";
+import {mat4, quat, vec3} from "gl-matrix";
 import Keyboard from "./keyboard";
+import Mouse from "./mouse";
 
 export default class Controller {
   public viewMatrix: mat4;
@@ -7,18 +8,23 @@ export default class Controller {
   public velocity: vec3;
 
   private keyboard: Keyboard;
+  private mouse: Mouse;
+
   private readonly rotation: vec3;
   private forward: vec3;
   private up: vec3;
   private right: vec3;
+  private rotationQuat: quat;
 
-  constructor(keyboard: Keyboard) {
+  constructor(keyboard: Keyboard, mouse: Mouse) {
     this.keyboard = keyboard;
+    this.mouse = mouse;
 
     this.viewMatrix = mat4.create();
-    this.position = vec3.fromValues(0, 100.0, -100.0);
+    this.position = vec3.fromValues(0, 0.0, -300.0);
     this.velocity = vec3.fromValues(0,0,0);
     this.rotation = vec3.fromValues(0, 0, 0);
+    this.rotationQuat = quat.create();
 
     this.forward = vec3.create();
     this.right = vec3.create();
@@ -30,57 +36,67 @@ export default class Controller {
 
   update(device: GPUDevice, projectionMatrix: mat4, timestamp: number) {
     
-    const distance = this.keyboard.keydown('shift') ? 1000 : 10;
+    const distance = this.keyboard.keydown('shift') ? 100 : 10;
     const velocity = vec3.fromValues(0,0,0);
     if (this.keyboard.keydown('w')) {
-      velocity[2] += distance;
+      //velocity[2] += distance;
+      vec3.add(velocity, velocity, this.forward);
     }
 
     if (this.keyboard.keydown('s')) {
-      velocity[2] -= distance;
+      //velocity[2] -= distance;
+      vec3.sub(velocity, velocity, this.forward);
     }
 
     if (this.keyboard.keydown('a')) {
-      velocity[0] += distance;
+      //velocity[0] += distance;
+      vec3.add(velocity, velocity, this.right);
     }
 
     if (this.keyboard.keydown('d')) {
-      velocity[0] -= distance;
+      //velocity[0] -= distance;
+      vec3.sub(velocity, velocity, this.right);
     }
 
 
     if (this.keyboard.keydown('r')) {
-      velocity[1] += distance;
+      //velocity[1] += distance;
+      vec3.sub(velocity, velocity, this.up);
     }
 
     if (this.keyboard.keydown('f')) {
-      velocity[1] -= distance;
+      //velocity[1] -= distance;
+      vec3.add(velocity, velocity, this.up);
     }
 
-    vec3.add(this.position, this.position, velocity);
+    vec3.add(this.position, this.position, vec3.scale(velocity, velocity, distance));
     this.velocity = velocity;
 
-    if (this.keyboard.keydown('arrowleft')) {
-      this.rotation[1] -= timestamp / 500;
+    vec3.scale(this.rotation, this.up, this.mouse.position.x * 0.08);
+    vec3.add(this.rotation, this.rotation, vec3.scale(vec3.create(), this.right, this.mouse.position.y * 0.08));
+
+    if (this.keyboard.keydown('q')) {
+      //quat.rotateZ(this.rotationQuat, this.rotationQuat, .05)
+      //vec3.add(this.rotation, this.rotation, vec3.scale(vec3.create(), this.up, 1.));
     }
 
-    if (this.keyboard.keydown('arrowright')) {
-      this.rotation[1] += timestamp / 500;
+    if (this.keyboard.keydown('e')) {
+      //this.rotation[0] += timestamp / 500;
     }
 
-    if (this.keyboard.keydown('arrowup')) {
-      this.rotation[0] -= timestamp / 500;
-    }
+    let rot = quat.fromEuler(quat.create(), this.rotation[0], this.rotation[1], this.rotation[2]);
+    quat.mul(this.rotationQuat, this.rotationQuat, rot);
 
-    if (this.keyboard.keydown('arrowdown')) {
-      this.rotation[0] += timestamp / 500;
-    }
-
-    mat4.lookAt(this.viewMatrix,
-        this.position,
-        vec3.add(vec3.create(), this.position, vec3.fromValues(0.0, -1.0, .5)),
-        vec3.fromValues(0.0, 1.0, 0.0));
-        
+    // mat4.lookAt(this.viewMatrix,
+    //     this.position,
+    //     vec3.add(vec3.create(), this.position, vec3.fromValues(0.0, -1.0, .5)),
+    //     vec3.fromValues(0.0, 1.0, 0.0));
+    // mat4.fromXRotation(this.viewMatrix, this.rotation[1]);
+    // mat4.rotateY(this.viewMatrix, this.viewMatrix, this.rotation[0]);
+    mat4.fromQuat(this.viewMatrix, this.rotationQuat);
+    mat4.translate(this.viewMatrix, this.viewMatrix, this.position);
+    //mat4.fromRotationTranslation(this.viewMatrix, this.rotationQuat, this.position);
+    //mat4.invert(this.viewMatrix, this.viewMatrix);
 
     const inverted = mat4.invert(mat4.create(), this.viewMatrix);
     vec3.normalize(this.right, <vec3> inverted.slice(0, 3));

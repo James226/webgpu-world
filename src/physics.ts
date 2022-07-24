@@ -23,6 +23,7 @@ export default class Voxel {
     const start = performance.now();
     console.log('Loading physics engine');
     this.computePipeline = await device.createComputePipelineAsync({
+      layout: 'auto',
       compute: {
         module: device.createShaderModule({
           code: computeVoxels,
@@ -107,7 +108,7 @@ export default class Voxel {
       const computePassEncoder = computeEncoder.beginComputePass();
       computePassEncoder.setPipeline(this.computePipeline);
       computePassEncoder.setBindGroup(0, this.computeBindGroup);
-      computePassEncoder.dispatch(1);
+      computePassEncoder.dispatchWorkgroups(1);
       computePassEncoder.end();
 
       const copyEncoder = device.createCommandEncoder();

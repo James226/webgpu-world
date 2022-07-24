@@ -4,11 +4,13 @@ import Keyboard from './keyboard';
 import VoxelCollection from './voxel-collection';
 import Physics from './physics';
 import {mat4, vec3} from "gl-matrix";
+import Mouse from "./mouse";
 
 class Game {
   private loaded: boolean;
   private voxelWorker: ContouringWorker;
   private keyboard: Keyboard;
+  private mouse: Mouse;
   private physics: Physics;
   private controller: Controller;
   private collection: VoxelCollection;
@@ -22,10 +24,13 @@ class Game {
     this.keyboard = new Keyboard();
     this.keyboard.init();
 
+    this.mouse = new Mouse();
+    this.mouse.init();
+
     this.physics = new Physics();
     await this.physics.init(device);
 
-    this.controller = new Controller(this.keyboard);
+    this.controller = new Controller(this.keyboard, this.mouse);
     this.controller.init();
 
     this.collection = new VoxelCollection();
@@ -105,6 +110,7 @@ class Game {
     
     this.collection.update(device, viewMatrix);
     this.keyboard.update();
+    this.mouse.update();
   }
 
   draw(passEncoder: GPURenderPassEncoder) {

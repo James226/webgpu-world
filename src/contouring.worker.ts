@@ -46,7 +46,7 @@ const ctx: Worker = self as any;
       i = x + (y * worldSize) + (z * worldSize * worldSize);
 
       const positionStride = (chunkSize * stride);
-      console.log('Generating', stride, positionStride, halfWorldSize, x * positionStride - halfWorldSize, -32, z * positionStride - halfWorldSize, x, y, z)
+      //console.log('Generating', stride, positionStride, halfWorldSize, x * positionStride - halfWorldSize, -32, z * positionStride - halfWorldSize, x, y, z)
       const { vertices, normals, indices } = await voxel.generate(device, queue, vec3.fromValues(x * positionStride - halfWorldSize, -32, z * positionStride - halfWorldSize), stride);
       ctx.postMessage(({ type: 'update', i, ix: x, iy: y, iz: z, x: 0, y: 0, z: 0, vertices: vertices.buffer, normals: normals.buffer, indices: indices.buffer }), [vertices.buffer, normals.buffer, indices.buffer])
       

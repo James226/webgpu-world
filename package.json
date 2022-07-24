@@ -24,7 +24,7 @@
     "worker-loader": "^3.0.8"
   },
   "dependencies": {
-    "@webgpu/types": "^0.1.13",
+    "@webgpu/types": "^0.1.21",
     "gl-matrix": "^3.3.0",
     "seedrandom": "^3.0.5"
   }

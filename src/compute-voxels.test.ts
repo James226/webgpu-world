@@ -19,6 +19,7 @@ describe('compute-voxels', () => {
 
       const computeVoxels = ComputeVoxels.replace("%GET_DENSITY%", density)
       const computePipeline = await device.createComputePipelineAsync({
+        layout: 'auto',
         compute: {
           module: device.createShaderModule({
             code: computeVoxels,
@@ -87,7 +88,7 @@ describe('compute-voxels', () => {
       const computePassEncoder = computeEncoder.beginComputePass();
       computePassEncoder.setPipeline(computePipeline);
       computePassEncoder.setBindGroup(0, computeBindGroup);
-      computePassEncoder.dispatch(5, 5, 5);
+      computePassEncoder.dispatchWorkgroups(5, 5, 5);
       computePassEncoder.end();
 
       const copyEncoder = device.createCommandEncoder();

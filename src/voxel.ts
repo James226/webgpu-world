@@ -100,6 +100,7 @@ export default class Voxel {
     const start = performance.now();
     console.log('Start loading voxel engine', performance.now() - start);
     this.computePipeline = await device.createComputePipelineAsync({
+      layout: 'auto',
       compute: {
         module: device.createShaderModule({
           code: computeVoxelsCode,
@@ -108,9 +109,10 @@ export default class Voxel {
       },
     });
 
-    console.log('10', performance.now() - start);
+    //console.log('10', performance.now() - start);
 
     this.computeCornersPipeline = await device.createComputePipelineAsync({
+      layout: 'auto',
       compute: {
         module: device.createShaderModule({
           code: ComputeCorners
@@ -197,7 +199,7 @@ export default class Voxel {
       mappedAtCreation: false,
     });
 
-    console.log('20', performance.now() - start);
+    //console.log('20', performance.now() - start);
 
     this.computeBindGroup = device.createBindGroup({
       layout: this.computePipeline.getBindGroupLayout(0),
@@ -224,7 +226,7 @@ export default class Voxel {
       ]
     });
 
-    console.log('21', performance.now() - start);
+    //console.log('21', performance.now() - start);
 
     this.computeCornersBindGroup = device.createBindGroup({
       layout: this.computeCornersPipeline.getBindGroupLayout(0),
@@ -245,6 +247,7 @@ export default class Voxel {
     });
 
     this.computePositionsPipeline = await device.createComputePipelineAsync({
+      layout: 'auto',
       compute: {
         module: device.createShaderModule({
           code: ComputePositions,
@@ -253,7 +256,7 @@ export default class Voxel {
       },
     });
 
-    console.log('30', performance.now() - start);
+    //console.log('30', performance.now() - start);
 
 
     this.computePositionsBindGroup = device.createBindGroup({
@@ -274,21 +277,22 @@ export default class Voxel {
       ]
     });
 
-    console.log('31', performance.now() - start);
+    //console.log('31', performance.now() - start);
 
     const module = device.createShaderModule({
       code: computeVoxelsCode,
     });
 
-    console.log('31.5', performance.now() - start);
+    //console.log('31.5', performance.now() - start);
     this.computeVoxelsPipeline = await device.createComputePipelineAsync({
+      layout: 'auto',
       compute: {
         module,
         entryPoint: 'main',
-      },
+      }
     });
 
-    console.log('32', performance.now() - start);
+    //console.log('32', performance.now() - start);
 
 
     this.computeVoxelsBindGroup = device.createBindGroup({
@@ -327,7 +331,7 @@ export default class Voxel {
       ]
     });
 
-    console.log('40', performance.now() - start);
+    //console.log('40', performance.now() - start);
 
 
     this.voxelReadBuffer = device.createBuffer({
@@ -380,19 +384,19 @@ export default class Voxel {
       const computePassEncoder = computeEncoder.beginComputePass();
       computePassEncoder.setPipeline(this.computePipeline);
       computePassEncoder.setBindGroup(0, this.computeBindGroup);
-      computePassEncoder.dispatch(octreeSize + 1, octreeSize + 1, octreeSize + 1);
+      computePassEncoder.dispatchWorkgroups(octreeSize + 1, octreeSize + 1, octreeSize + 1);
       computePassEncoder.end();
 
       const computeCornersPass = computeEncoder.beginComputePass();
       computeCornersPass.setPipeline(this.computeCornersPipeline);
       computeCornersPass.setBindGroup(0, this.computeCornersBindGroup);
-      computeCornersPass.dispatch(octreeSize, octreeSize, octreeSize);
+      computeCornersPass.dispatchWorkgroups(octreeSize, octreeSize, octreeSize);
       computeCornersPass.end();
 
       const computePositionsPass = computeEncoder.beginComputePass();
       computePositionsPass.setPipeline(this.computePositionsPipeline);
       computePositionsPass.setBindGroup(0, this.computePositionsBindGroup);
-      computePositionsPass.dispatch(1);
+      computePositionsPass.dispatchWorkgroups(1);
       computePositionsPass.end();
 
       const copyEncoder = device.createCommandEncoder();
@@ -427,7 +431,7 @@ export default class Voxel {
 
             const arrayBuffer = this.gpuReadBuffer.getMappedRange();
             const voxelCount = new Uint32Array(arrayBuffer)[0];
-            console.log('Voxel count', voxelCount);
+            //console.log('Voxel count', voxelCount);
             this.gpuReadBuffer.unmap();
 
             if (voxelCount === 0) {
@@ -440,7 +444,7 @@ export default class Voxel {
             const computePassEncoder = computeEncoder.beginComputePass();
             computePassEncoder.setPipeline(this.computeVoxelsPipeline);
             computePassEncoder.setBindGroup(0, this.computeVoxelsBindGroup);
-            computePassEncoder.dispatch(dispatchCount);
+            computePassEncoder.dispatchWorkgroups(dispatchCount);
             computePassEncoder.end();
 
             const copyEncoder = device.createCommandEncoder();

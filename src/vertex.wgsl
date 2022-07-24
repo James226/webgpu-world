@@ -20,7 +20,8 @@ fn lambert(N: vec3<f32>, L: vec3<f32>) -> f32
 struct VertexOutput {
   @builtin(position) Position : vec4<f32>,
   @location(0) fragPosition: vec4<f32>,
-  @location(1) normal: vec3<f32>
+  @location(1) normal: vec3<f32>,
+  @location(2) color: vec3<f32>,
 };
 
 @stage(vertex)
@@ -35,8 +36,9 @@ fn main(@location(0) position : vec4<f32>,
   output.Position = uniforms.modelViewProjectionMatrix * position;
   output.normal = normal.xyz;
 
-  var result = vec3<f32>(0.2, 0.2, 0.2) + light.diffuse * lambert(vec3<f32>(1.0, 1.0, 1.0), light.position);
+  var result = vec3<f32>(0.2, 0.2, 0.2) + light.diffuse * lambert(normal.xyz, light.position);
 
   output.fragPosition = position;
+  output.color = result;
   return output;
 }

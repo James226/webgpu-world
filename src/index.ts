@@ -23,6 +23,9 @@ const configureRenderer = () => {
 renderer.init(canvas).then(async () => {
 
   window.addEventListener('resize', configureRenderer, false);
+  window.addEventListener('click', () => {
+    canvas.requestPointerLock();
+  });
 
   await game.init(renderer.device);
 
