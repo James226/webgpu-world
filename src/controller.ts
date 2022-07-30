@@ -11,10 +11,12 @@ export default class Controller {
   private mouse: Mouse;
 
   private readonly rotation: vec3;
-  private forward: vec3;
-  private up: vec3;
-  private right: vec3;
-  private rotationQuat: quat;
+  private readonly forward: vec3;
+  private readonly up: vec3;
+  private readonly right: vec3;
+  private readonly rotationQuat: quat;
+
+  private tool: boolean;
 
   constructor(keyboard: Keyboard, mouse: Mouse) {
     this.keyboard = keyboard;
@@ -29,6 +31,8 @@ export default class Controller {
     this.forward = vec3.create();
     this.right = vec3.create();
     this.up = vec3.create();
+
+    this.tool = false;
   }
 
   init() {
@@ -82,6 +86,16 @@ export default class Controller {
 
     if (this.keyboard.keydown('e')) {
       //this.rotation[0] += timestamp / 500;
+    }
+
+    if (this.keyboard.keydown('1')) {
+      this.tool = true;
+      document.getElementById('tool').innerText = 'true';
+    }
+
+    if (this.keyboard.keydown('`')) {
+      this.tool = false;
+      document.getElementById('tool').innerText = 'false';
     }
 
     let rot = quat.fromEuler(quat.create(), this.rotation[0], this.rotation[1], this.rotation[2]);

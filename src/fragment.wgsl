@@ -113,7 +113,7 @@ fn cellular(co: vec2<f32>) -> vec3<f32> {
     return color;
 }
 
-fn sample(co: vec2<f32>) -> vec3<f32> {
+fn samp(co: vec2<f32>) -> vec3<f32> {
   let cell =  cellular(co * 20.0);
   // Stone
   let n = (1.0 + sin((co.x + perlinNoise2(co * 5.0) / 2.0) * 50.0)) / 2.0;
@@ -140,10 +140,10 @@ fn main(@location(0) vPos: vec4<f32>,
 	// let xaxis = textureSample( myerTexture, mySampler, vPos.yz * normalRepeat).rgb;
 	// let yaxis = textureSample( myTexture, mySampler, vPos.xz  * normalRepeat).rgb;
 	// let zaxis = textureSample( myTexture, mySampler, vPos.xy  * normalRepeat).rgb;
-  let xaxis = sample(vPos.yz * normalRepeat);
-  let yaxis = sample(vPos.xz * normalRepeat);
-  let zaxis = sample(vPos.xy * normalRepeat);
-	var texture = xaxis * blending.x + yaxis * blending.y + zaxis * blending.z;
+  let xaxis = samp(vPos.yz * normalRepeat);
+  let yaxis = samp(vPos.xz * normalRepeat);
+  let zaxis = samp(vPos.xy * normalRepeat);
+	var tex = xaxis * blending.x + yaxis * blending.y + zaxis * blending.z;
 
-  return vec4<f32>(texture * color, 1.0);
+  return vec4<f32>(tex * color, 1.0);
 }

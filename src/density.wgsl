@@ -49,6 +49,7 @@ fn getDensity(worldPosition: vec3<f32>) -> f32 {
 
 	var result: f32 = ((worldDist) / worldRadius) + CLerp(mountain, blob, minMountainMixLerpAmount + ((maxMountainMixLerpAmount - minMountainMixLerpAmount) * mountainBlend));
 
-    return result;
+
+    return min(Sphere(worldPosition, vec3<f32>(2000.0, 100.0, 100.0), 100.0), result);
 	//return max(result, -Sphere(worldPosition, vec3<f32>(50.0, 50.0, 50.0), 50.0));
 }
