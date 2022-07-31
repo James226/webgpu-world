@@ -31,7 +31,8 @@ const ctx: Worker = self as any;
       return;
     }
     generating = true;
-    const { stride } = e.data;
+    const { position } = e.data;
+    const stride = 16;
     const size = 128;
     console.log(`World Size: ${size} (${size * 32})`);
     const chunkSize = 31;
@@ -43,7 +44,9 @@ const ctx: Worker = self as any;
     const halfWorldSize = (size * chunkSize / 2);
 
     let worldGenerator = new WorldGenerator(stride);
-    let info = worldGenerator.init(0, 0, 0);
+    let info = worldGenerator.init(-(position[0] / chunkSize), 0, -(position[2] / chunkSize));
+
+    console.log(`Init world at ${info.x}:${info.y}:${info.z} for stride ${stride}`)
 
     do {
       let r = worldGenerator.next(info);
@@ -51,26 +54,30 @@ const ctx: Worker = self as any;
       info = r[1];
 
       const {x, y, z} = result;
-      console.log(`Generating ${x}:${y}:${z} (${result.stride})`)
-      const { vertices, normals, indices } = await voxel.generate(device, queue, vec3.fromValues(x, y, z), result.stride);
+      const { vertices, normals, indices } = await voxel.generate(device, queue, vec3.fromValues(x * chunkSize, y * chunkSize, z * chunkSize), result.stride);
+      if (vertices.length > 0) {
+        console.log(`Generating ${x}:${y}:${z} (${result.stride} / ${info.previousOffset})`)
+      }
       ctx.postMessage(({ type: 'update', i: `${x}:${y}:${z}`, ix: x, iy: y, iz: z, x: 0, y: 0, z: 0, vertices: vertices.buffer, normals: normals.buffer, indices: indices.buffer }), [vertices.buffer, normals.buffer, indices.buffer])
 
-    } while (info.stride <= 64);
+    } while (info.stride <= 256);
+
+    // 496
     // for (let x = 0; x < worldSize; x++)
     // for (let y = 0; y < worldSize; y++)
     // for (let z = 0; z < worldSize; z++) {
     //   i = x + (y * worldSize) + (z * worldSize * worldSize);
     //
     //   const positionStride = (chunkSize * stride);
-    //   console.log(`Generating ${x}:${y}:${z} (${stride})`)
+    //   console.log(`Generating ${x * positionStride - halfWorldSize}:${-32}:${z * positionStride - halfWorldSize} (${stride})`)
     //
     //   const { vertices, normals, indices } = await voxel.generate(device, queue, vec3.fromValues(x * positionStride - halfWorldSize, -32, z * positionStride - halfWorldSize), stride);
     //   ctx.postMessage(({ type: 'update', i: `${x}:${y}:${z}`, ix: x, iy: y, iz: z, x: 0, y: 0, z: 0, vertices: vertices.buffer, normals: normals.buffer, indices: indices.buffer }), [vertices.buffer, normals.buffer, indices.buffer])
     // }
 
-    for (let idx = i + 1; idx < 4 + (4 * 5) + (4 * 5 * 5); idx++) {
-      postMessage(({ type: 'clear', i: idx, vertices: [], normals: [], indices: [] }));
-    }
+    // for (let idx = i + 1; idx < 4 + (4 * 5) + (4 * 5 * 5); idx++) {
+    //   postMessage(({ type: 'clear', i: idx, vertices: [], normals: [], indices: [] }));
+    // }
     generating = false;
 
     console.log(`Generation complete in ${performance.now() - t0} milliseconds`);

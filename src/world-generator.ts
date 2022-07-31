@@ -72,7 +72,7 @@ export default class WorldGenerator {
       stride: this.minStride,
       iteration: 0,
       layer: 1,
-      previousOffset: this.minStride / 2
+      previousOffset: -1 * this.minStride / 2
     };
   }
 
@@ -110,6 +110,7 @@ export default class WorldGenerator {
     if (iteration >= offsets.length) {
       iteration = 0;
       layer++;
+
       const layerCount = this.layerCount(info.stride);
       if (layer > layerCount) {
         layer = 1;
@@ -119,9 +120,9 @@ export default class WorldGenerator {
     }
     return [
       {
-        x: halfStride * offset.x + info.x,
-        y: halfStride * offset.y + info.y,
-        z: halfStride * offset.z + info.z,
+        x: info.stride * offset.x + info.x - info.previousOffset,
+        y: info.stride * offset.y + info.y - info.previousOffset,
+        z: info.stride * offset.z + info.z - info.previousOffset,
         stride: info.stride
       },
       { ...info, iteration, layer, stride, previousOffset }

@@ -85,7 +85,7 @@ class Game {
 
       this.collection.freeAll();
 
-      this.voxelWorker.postMessage({ stride: this.stride });
+      this.voxelWorker.postMessage({ stride: this.stride, position: this.controller.position });
 
       this.stride /= 2;
       if (this.stride < 1) this.stride = 32;

@@ -22,6 +22,14 @@ describe('World Generator', () => {
     it('current stride defaults to minimum stride', () => {
       expect(info.stride).toEqual(8);
     });
+
+    it('previousOffset is correct', () => {
+      expect(info.previousOffset).toEqual(-4);
+    });
+
+    it('layer is correct', () => {
+      expect(info.layer).toEqual(1);
+    });
   });
 
   describe('when next is called', () => {
@@ -36,6 +44,34 @@ describe('World Generator', () => {
 
       expect(info).toEqual({
         x: 0, y: 0, z: 0, stride: 8, iteration: 1, layer: 1, previousOffset: -4
+      });
+    });
+
+    it('returns origin position for second layer', () => {
+      let [result, info] = worldGenerator.next({
+        x: 0, y: 0, z: 0, stride: 8, iteration: 0, layer: 2, previousOffset: -4
+      });
+
+      expect(result).toEqual({
+        x: -12, y: -12, z: -12, stride: 8
+      });
+
+      expect(info).toEqual({
+        x: 0, y: 0, z: 0, stride: 8, iteration: 1, layer: 2, previousOffset: -4
+      });
+    });
+
+    it('returns origin position for second layer second iteration', () => {
+      let [result, info] = worldGenerator.next({
+        x: 0, y: 0, z: 0, stride: 8, iteration: 6, layer: 2, previousOffset: -4
+      });
+
+      expect(result).toEqual({
+        x: -12, y: -4, z: 12, stride: 8
+      });
+
+      expect(info).toEqual({
+        x: 0, y: 0, z: 0, stride: 8, iteration: 7, layer: 2, previousOffset: -4
       });
     });
 
@@ -59,7 +95,7 @@ describe('World Generator', () => {
       });
 
       expect(result).toEqual({
-        x: 36, y: 20, z: 36, stride: 8
+        x: 36, y: 20, z: 44, stride: 8
       });
 
       expect(info).toEqual({
@@ -73,7 +109,7 @@ describe('World Generator', () => {
       });
 
       expect(result).toEqual({
-        x: 44, y: 28, z: 36, stride: 8
+        x: 52, y: 36, z: 44, stride: 8
       });
 
       expect(info).toEqual({
@@ -87,7 +123,7 @@ describe('World Generator', () => {
       });
 
       expect(result).toEqual({
-        x: 48, y: 32, z: 40, stride: 8
+        x: 60, y: 44, z: 52, stride: 8
       });
 
       expect(info).toEqual({
