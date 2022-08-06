@@ -511,7 +511,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
 		let corners: u32 = voxelMaterials.voxelMaterials[voxelIndex];
 
-		let nodePos: vec3<f32> = vec3<f32>(f32(x * nodeSize), f32(y * nodeSize), f32 (z * nodeSize)) + uniforms.chunkPosition;
+		let nodePos: vec3<f32> = (vec3<f32>(f32(x), f32(y), f32 (z)) * uniforms.stride) + uniforms.chunkPosition;
 		voxels.voxels[trueIndex].voxMin = nodePos;
 		let MAX_CROSSINGS: i32 = 6;
 		var edgeCount: i32 = 0;

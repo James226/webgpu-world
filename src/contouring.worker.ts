@@ -30,12 +30,27 @@ const ctx: Worker = self as any;
       console.log('Still generating')
       return;
     }
+
     generating = true;
-    const { position } = e.data;
-    const stride = 16;
+    const { position, detail } = e.data;
+
+    if (detail) {
+
+      const {x, y, z, s} = detail;
+      const { vertices, normals, indices } = await voxel.generate(device, queue, vec3.fromValues(x-(31*s*0.5), y-(31*s*0.5), z-(31*s*0.5)), s);
+      if (vertices.length > 0) {
+      }
+      ctx.postMessage(({ type: 'update', i: `${x}:${y}:${z}`, ix: x, iy: y, iz: z, x: 0, y: 0, z: 0, vertices: vertices.buffer, normals: normals.buffer, indices: indices.buffer, stride: s }), [vertices.buffer, normals.buffer, indices.buffer])
+      generating = false;
+      return;
+    }
+
+    const stride = 8;
     const size = 128;
     console.log(`World Size: ${size} (${size * 32})`);
     const chunkSize = 31;
+    const halfStride = stride / 2;
+    //const halfChunk = stride * chunkSize * 0.5;
     const worldSize =  Math.ceil(size / stride);
 
     console.log(`Starting generation. Stride: ${stride} (${worldSize})`);
@@ -44,7 +59,7 @@ const ctx: Worker = self as any;
     const halfWorldSize = (size * chunkSize / 2);
 
     let worldGenerator = new WorldGenerator(stride);
-    let info = worldGenerator.init(-(position[0] / chunkSize), 0, -(position[2] / chunkSize));
+    let info = worldGenerator.init(-(position[0] / chunkSize), -(position[1] / chunkSize), -(position[2] / chunkSize));
 
     console.log(`Init world at ${info.x}:${info.y}:${info.z} for stride ${stride}`)
 
@@ -54,11 +69,13 @@ const ctx: Worker = self as any;
       info = r[1];
 
       const {x, y, z} = result;
-      const { vertices, normals, indices } = await voxel.generate(device, queue, vec3.fromValues(x * chunkSize, y * chunkSize, z * chunkSize), result.stride);
+      const halfChunk = result.stride * chunkSize * 0.5;
+
+      const { vertices, normals, indices } = await voxel.generate(device, queue, vec3.fromValues(x * chunkSize -halfChunk, y * chunkSize -halfChunk, z * chunkSize -halfChunk), result.stride);
       if (vertices.length > 0) {
-        console.log(`Generating ${x}:${y}:${z} (${result.stride} / ${info.previousOffset})`)
+        console.log(`Generating ${x * chunkSize -halfChunk}:${y * chunkSize -halfChunk}:${z * chunkSize -halfChunk} (${result.stride} / ${halfChunk})`)
       }
-      ctx.postMessage(({ type: 'update', i: `${x}:${y}:${z}`, ix: x, iy: y, iz: z, x: 0, y: 0, z: 0, vertices: vertices.buffer, normals: normals.buffer, indices: indices.buffer }), [vertices.buffer, normals.buffer, indices.buffer])
+      ctx.postMessage(({ type: 'update', i: `${x}:${y}:${z}`, ix: x, iy: y, iz: z, x: 0, y: 0, z: 0, vertices: vertices.buffer, normals: normals.buffer, indices: indices.buffer, stride: result.stride }), [vertices.buffer, normals.buffer, indices.buffer])
 
     } while (info.stride <= 256);
 

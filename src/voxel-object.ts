@@ -2,6 +2,7 @@ import {mat4, vec3} from 'gl-matrix';
 
 export default class VoxelObject {
   public position: vec3;
+  public stride: number;
   private vertexBuffer: GPUBuffer;
   private indexCount: number;
   private indexBuffer: GPUBuffer;
@@ -35,7 +36,7 @@ export default class VoxelObject {
       this.indexBuffer.unmap();
     }
 
-    const uniformBufferSize = 4 * 16;
+    const uniformBufferSize = 4 * 16 + 4;
     this.uniformBuffer = device.createBuffer({
       size: uniformBufferSize,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
@@ -111,6 +112,16 @@ export default class VoxelObject {
         (<Float32Array>transformationMatrix).buffer,
         (<Float32Array>transformationMatrix).byteOffset,
         (<Float32Array>transformationMatrix).byteLength
+    );
+
+    const strideBuffer = new Int32Array(1);
+    strideBuffer[0] = this.stride
+    device.queue.writeBuffer(
+      this.uniformBuffer,
+      (<Float32Array>transformationMatrix).byteLength,
+      strideBuffer.buffer,
+      strideBuffer.byteOffset,
+      strideBuffer.byteLength
     );
   }
 
