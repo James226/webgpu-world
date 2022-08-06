@@ -1,4 +1,4 @@
-interface WorldGeneratorInfo {
+export interface WorldGeneratorInfo {
   x: number;
   y: number;
   z: number;
@@ -77,7 +77,7 @@ export default class WorldGenerator {
   }
 
   layerRadius(layer: number, stride: number) {
-    if (stride == this.minStride) {
+    if (stride === this.minStride) {
       return layer;
     }
     if (stride === this.minStride * 2) {
@@ -120,9 +120,9 @@ export default class WorldGenerator {
     }
     return [
       {
-        x: info.stride * offset.x + info.x - info.previousOffset,
-        y: info.stride * offset.y + info.y - info.previousOffset,
-        z: info.stride * offset.z + info.z - info.previousOffset,
+        x: info.stride * offset.x + info.x - Math.sign(offset.x) * halfStride,
+        y: info.stride * offset.y + info.y - Math.sign(offset.y) * halfStride,
+        z: info.stride * offset.z + info.z - Math.sign(offset.z) * halfStride,
         stride: info.stride
       },
       { ...info, iteration, layer, stride, previousOffset }

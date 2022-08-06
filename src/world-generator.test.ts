@@ -47,6 +47,20 @@ describe('World Generator', () => {
       });
     });
 
+    it('returns origin position for iteration 1', () => {
+      let [result, info] = worldGenerator.next({
+        x: 0, y: 0, z: 0, stride: 8, iteration: 1, layer: 1, previousOffset: -4
+      });
+
+      expect(result).toEqual({
+        x: -4, y: -4, z: 4, stride: 8
+      });
+
+      expect(info).toEqual({
+        x: 0, y: 0, z: 0, stride: 8, iteration: 2, layer: 1, previousOffset: -4
+      });
+    });
+
     it('returns origin position for second layer', () => {
       let [result, info] = worldGenerator.next({
         x: 0, y: 0, z: 0, stride: 8, iteration: 0, layer: 2, previousOffset: -4
@@ -67,7 +81,7 @@ describe('World Generator', () => {
       });
 
       expect(result).toEqual({
-        x: -12, y: -4, z: 12, stride: 8
+        x: -12, y: -4, z: 4, stride: 8
       });
 
       expect(info).toEqual({
@@ -95,7 +109,7 @@ describe('World Generator', () => {
       });
 
       expect(result).toEqual({
-        x: 36, y: 20, z: 44, stride: 8
+        x: 36, y: 20, z: 36, stride: 8
       });
 
       expect(info).toEqual({
@@ -109,7 +123,7 @@ describe('World Generator', () => {
       });
 
       expect(result).toEqual({
-        x: 52, y: 36, z: 44, stride: 8
+        x: 44, y: 28, z: 36, stride: 8
       });
 
       expect(info).toEqual({
@@ -123,11 +137,39 @@ describe('World Generator', () => {
       });
 
       expect(result).toEqual({
-        x: 60, y: 44, z: 52, stride: 8
+        x: 52, y: 36, z: 44, stride: 8
       });
 
       expect(info).toEqual({
         x: 40, y: 24, z: 32, stride: 16, iteration: 0, layer: 1, previousOffset: 8
+      });
+    });
+
+    it('returns correct position for next stride', () => {
+      let [result, info] = worldGenerator.next({
+        x: 0, y: 0, z: 0, stride: 16, iteration: 0, layer: 1, previousOffset: 8
+      });
+
+      expect(result).toEqual({
+        x: -24, y: -24, z: -24, stride: 16
+      });
+
+      expect(info).toEqual({
+        x: 0, y: 0, z: 0, stride: 16, iteration: 1, layer: 1, previousOffset: 8
+      });
+    });
+
+    it('returns correct position 32/0/1', () => {
+      let [result, info] = worldGenerator.next({
+        x: 0, y: 0, z: 0, stride: 32, iteration: 0, layer: 1, previousOffset: 48
+      });
+
+      expect(result).toEqual({
+        x: -80, y: -80, z: -80, stride: 32
+      });
+
+      expect(info).toEqual({
+        x: 0, y: 0, z: 0, stride: 32, iteration: 1, layer: 1, previousOffset: 48
       });
     });
   });

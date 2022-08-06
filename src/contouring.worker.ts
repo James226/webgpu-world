@@ -1,7 +1,7 @@
 import {vec3} from 'gl-matrix';
 import Voxel from './voxel';
 import {QueueItem} from "./queueItem";
-import WorldGenerator from "./world-generator";
+import WorldGenerator, { WorldGeneratorInfo } from "./world-generator";
 
 const ctx: Worker = self as any;
 
@@ -58,14 +58,15 @@ const ctx: Worker = self as any;
     let i = 0;
     const halfWorldSize = (size * chunkSize / 2);
 
-    let worldGenerator = new WorldGenerator(stride);
+    const worldGenerator = new WorldGenerator(stride);
+    //info = worldGenerator.init(0,0,0);
     let info = worldGenerator.init(-(position[0] / chunkSize), -(position[1] / chunkSize), -(position[2] / chunkSize));
 
     console.log(`Init world at ${info.x}:${info.y}:${info.z} for stride ${stride}`)
 
     do {
       let r = worldGenerator.next(info);
-      let result = r[0];
+      var result = r[0];
       info = r[1];
 
       const {x, y, z} = result;
@@ -73,11 +74,11 @@ const ctx: Worker = self as any;
 
       const { vertices, normals, indices } = await voxel.generate(device, queue, vec3.fromValues(x * chunkSize -halfChunk, y * chunkSize -halfChunk, z * chunkSize -halfChunk), result.stride);
       if (vertices.length > 0) {
-        console.log(`Generating ${x * chunkSize -halfChunk}:${y * chunkSize -halfChunk}:${z * chunkSize -halfChunk} (${result.stride} / ${halfChunk})`)
+        console.log(`Generating ${x}:${y}:${z} (${x * chunkSize -halfChunk}:${y * chunkSize -halfChunk}:${z * chunkSize -halfChunk}) (${result.stride} / ${halfChunk} / ${info.previousOffset})`)
       }
       ctx.postMessage(({ type: 'update', i: `${x}:${y}:${z}`, ix: x, iy: y, iz: z, x: 0, y: 0, z: 0, vertices: vertices.buffer, normals: normals.buffer, indices: indices.buffer, stride: result.stride }), [vertices.buffer, normals.buffer, indices.buffer])
 
-    } while (info.stride <= 256);
+    } while (info.stride <= 2048);
 
     // 496
     // for (let x = 0; x < worldSize; x++)

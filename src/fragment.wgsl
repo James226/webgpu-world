@@ -151,6 +151,6 @@ fn main(@location(0) vPos: vec4<f32>,
   let zaxis = samp(vPos.xy * normalRepeat);
 	var tex = xaxis * blending.x + yaxis * blending.y + zaxis * blending.z;
 
-  return vec4<f32>(min(f32(uniforms.stride) * 4.0 / 256.0, 1.0), 0.0, 0.0, 1.0);
-  //return vec4<f32>(tex * color, 1.0);
+  //return vec4<f32>(min(f32(uniforms.stride) * 4.0 / 256.0, 1.0), 0.0, 0.0, 1.0);
+  return vec4<f32>(tex * color, 1.0);
 }

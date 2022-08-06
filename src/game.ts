@@ -89,7 +89,7 @@ class Game {
         }
       };
 
-      //this.collection.freeAll();
+      this.collection.freeAll();
 
       this.voxelWorker.postMessage({ stride: this.stride, position: this.controller.position, detail: data });
 
@@ -103,7 +103,7 @@ class Game {
 
   update(device: GPUDevice, projectionMatrix: mat4, timestamp: number) {
     if (this.keyboard.keypress('g')) {
-      this.generate(device,null);
+      this.generate(device, null);
     }
 
     //this.physics.velocity = this.controller.velocity;
