@@ -598,6 +598,13 @@ fn computeMaterials(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32
 fn computePhysics(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 	let actor: u32 = GlobalInvocationID.x;
 
+  let pos = physics.actors[actor].position + physics.actors[actor].velocity;
+
+  if (getDensity(pos) >= 0.0) {
+    physics.actors[actor].position = pos;
+  }
+  return;
+
 	if (getDensity(physics.actors[actor].position) < 0.0) {
 		physics.actors[actor].position.y = physics.actors[actor].position.y - 10.0;
 	}

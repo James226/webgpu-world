@@ -38,39 +38,39 @@ export default class Controller {
     
     const distance = this.keyboard.keydown('shift') ? 100 : 10;
     const velocity = vec3.fromValues(0,0,0);
+    vec3.zero(this.velocity);
     if (this.keyboard.keydown('w')) {
       //velocity[2] += distance;
-      vec3.add(velocity, velocity, this.forward);
+      vec3.add(this.velocity, this.velocity, this.forward);
     }
 
     if (this.keyboard.keydown('s')) {
       //velocity[2] -= distance;
-      vec3.sub(velocity, velocity, this.forward);
+      vec3.sub(this.velocity, this.velocity, this.forward);
     }
 
     if (this.keyboard.keydown('a')) {
       //velocity[0] += distance;
-      vec3.add(velocity, velocity, this.right);
+      vec3.add(this.velocity, this.velocity, this.right);
     }
 
     if (this.keyboard.keydown('d')) {
       //velocity[0] -= distance;
-      vec3.sub(velocity, velocity, this.right);
+      vec3.sub(this.velocity, this.velocity, this.right);
     }
 
 
     if (this.keyboard.keydown('r')) {
       //velocity[1] += distance;
-      vec3.sub(velocity, velocity, this.up);
+      vec3.sub(this.velocity, this.velocity, this.up);
     }
 
     if (this.keyboard.keydown('f')) {
       //velocity[1] -= distance;
-      vec3.add(velocity, velocity, this.up);
+      vec3.add(this.velocity, this.velocity, this.up);
     }
 
-    vec3.add(this.position, this.position, vec3.scale(velocity, velocity, distance));
-    this.velocity = velocity;
+    //vec3.add(this.position, this.position, vec3.scale(velocity, velocity, distance));
 
     vec3.scale(this.rotation, this.up, this.mouse.position.x * 0.08);
     vec3.add(this.rotation, this.rotation, vec3.scale(vec3.create(), this.right, this.mouse.position.y * 0.08));

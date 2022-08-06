@@ -5,6 +5,7 @@ import VoxelCollection from './voxel-collection';
 import Physics from './physics';
 import {mat4, vec3} from "gl-matrix";
 import Mouse from "./mouse";
+import {QueueItem} from "./queueItem";
 
 class Game {
   private loaded: boolean;
@@ -16,6 +17,7 @@ class Game {
   private collection: VoxelCollection;
   private generating: boolean;
   private stride: number;
+
 
   async init(device: GPUDevice) {
     const worldSize = 10;
@@ -95,15 +97,23 @@ class Game {
       console.log(`Generation complete in ${performance.now() - t0} milliseconds`);
   }
 
-  update(device: GPUDevice, projectionMatrix: mat4, timestamp: number) {
+  async update(device: GPUDevice, projectionMatrix: mat4, timestamp: number) {
     if (this.keyboard.keypress('g')) {
       this.generate(device);
     }
 
-    //this.physics.velocity = this.controller.velocity;
-    //this.physics.update(device, (q: QueueItem) => queue.push(q));
+    const queue = (item: QueueItem) => {
+      device.queue.onSubmittedWorkDone().then(_ => {
+        item.callback();
+      })
 
-    //this.controller.position = this.physics.position as vec3;
+      device.queue.submit(item.items);
+    };
+
+    this.physics.velocity = this.controller.velocity;
+    await this.physics.update(device, (q: QueueItem) => queue(q));
+
+    this.controller.position = this.physics.position as vec3;
     this.controller.update(device, projectionMatrix, timestamp);
 
     const viewMatrix = this.controller.viewMatrix;
