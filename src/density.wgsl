@@ -42,12 +42,14 @@ fn getDensity(worldPosition: vec3<f32>) -> f32 {
 	//let mountain: f32 = CalculateNoiseValue(world, 0.07);
 	let mountain: f32 = 0.0;
 
-	var blob: f32 = CalculateNoiseValue(world, flatlandNoiseScale + ((rockyNoiseScale - flatlandNoiseScale) * rockyBlend));
-	//var blob: f32 = 0.0;
-	blob = CLerp(blob, (worldDist) * (flatlandYPercent + ((rockyYPercent - flatlandYPercent) * rockyBlend)),
-				flatlandLerpAmount + ((rockyLerpAmount - flatlandLerpAmount) * rockyBlend));
+	let i = perm.Perm[0];
 
-	var result: f32 = ((worldDist) / worldRadius) + CLerp(mountain, blob, minMountainMixLerpAmount + ((maxMountainMixLerpAmount - minMountainMixLerpAmount) * mountainBlend));
+	//var blob: f32 = CalculateNoiseValue(world, flatlandNoiseScale + ((rockyNoiseScale - flatlandNoiseScale) * rockyBlend));
+	//var blob: f32 = 0.0;
+	//blob = CLerp(blob, (worldDist) * (flatlandYPercent + ((rockyYPercent - flatlandYPercent) * rockyBlend)),
+	//			flatlandLerpAmount + ((rockyLerpAmount - flatlandLerpAmount) * rockyBlend));
+
+	var result: f32 = ((worldDist) / worldRadius); // + CLerp(mountain, blob, minMountainMixLerpAmount + ((maxMountainMixLerpAmount - minMountainMixLerpAmount) * mountainBlend));
 
 
     result = min(Box(worldPosition, vec3<f32>(2010.0, 150.0, 110.0), vec3<f32>(5000.0, 1000.0, 5000.0)), result);

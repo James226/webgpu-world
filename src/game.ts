@@ -5,6 +5,7 @@ import VoxelCollection from './voxel-collection';
 import Physics from './physics';
 import {mat4, vec3} from "gl-matrix";
 import Mouse from "./mouse";
+import * as Tone from 'tone'
 
 declare global {
   interface Window { generate: any; }
@@ -57,7 +58,7 @@ class Game {
 
         document.getElementById('loading').style.display = 'none';
         this.loaded = true;
-        //this.generate(device);
+        this.generate(device, null);
 
         window.generate = (data) => this.generate(device, data);
       }

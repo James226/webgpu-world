@@ -4,9 +4,6 @@ struct Uniforms {
 };
 @binding(0) @group(0) var<uniform> uniforms : Uniforms;
 
-@group(1) @binding(0) var mySampler: sampler;
-@group(1) @binding(1) var myTexture: texture_2d<f32>;
-
 fn getTriPlanarBlend(_wNorm: vec3<f32>) -> vec3<f32> {
   let maxNorm = max(max(_wNorm.x, _wNorm.y), _wNorm.z);
   if (_wNorm.x == maxNorm) {
@@ -143,9 +140,6 @@ fn main(@location(0) vPos: vec4<f32>,
         @location(2) color: vec3<f32>) -> @location(0) vec4<f32> {
   let fade = getFade(vPos.y);
   let blending = getTriPlanarBlend(vNormal);
-	// let xaxis = textureSample( myerTexture, mySampler, vPos.yz * normalRepeat).rgb;
-	// let yaxis = textureSample( myTexture, mySampler, vPos.xz  * normalRepeat).rgb;
-	// let zaxis = textureSample( myTexture, mySampler, vPos.xy  * normalRepeat).rgb;
   let xaxis = samp(vPos.yz * normalRepeat);
   let yaxis = samp(vPos.xz * normalRepeat);
   let zaxis = samp(vPos.xy * normalRepeat);
