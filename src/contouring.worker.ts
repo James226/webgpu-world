@@ -65,8 +65,8 @@ const ctx: Worker = self as any;
     console.log(`Init world at ${info.x}:${info.y}:${info.z} for stride ${stride}`)
 
     do {
-      let r = worldGenerator.next(info);
-      var result = r[0];
+      const r = worldGenerator.next(info);
+      const result = r[0];
       info = r[1];
 
       const {x, y, z} = result;

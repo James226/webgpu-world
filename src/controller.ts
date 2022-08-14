@@ -1,6 +1,7 @@
 import {mat4, quat, vec3} from "gl-matrix";
 import Keyboard from "./keyboard";
 import Mouse from "./mouse";
+import * as Tone from "tone";
 
 export default class Controller {
   public viewMatrix: mat4;
@@ -18,6 +19,8 @@ export default class Controller {
 
   private tool: boolean;
 
+  private noise: Tone.Noise;
+
   constructor(keyboard: Keyboard, mouse: Mouse) {
     this.keyboard = keyboard;
     this.mouse = mouse;
@@ -33,9 +36,19 @@ export default class Controller {
     this.up = vec3.create();
 
     this.tool = false;
+
+    this.noise = null;
   }
 
   init() {
+    this.noise = new Tone.Noise("pink");
+
+    let dist = new Tone.AutoFilter({
+      frequency: "4n",
+      baseFrequency: 200,
+      depth: 0
+    }).toDestination().start();
+    this.noise.connect(dist);
   }
 
   update(device: GPUDevice, projectionMatrix: mat4, timestamp: number) {
@@ -75,6 +88,18 @@ export default class Controller {
     }
 
     //vec3.add(this.position, this.position, vec3.scale(velocity, velocity, distance));
+    if (vec3.length(velocity) > 0) {
+      if (this.noise.state === "stopped") {
+        this.noise.start();
+      }
+    } else {
+      if (this.noise != null && this.noise.state === "started") {
+        this.noise.stop();
+      }
+    }
+
+    vec3.add(this.position, this.position, vec3.scale(velocity, velocity, distance));
+    this.velocity = velocity;
 
     vec3.scale(this.rotation, this.up, this.mouse.position.x * 0.08);
     vec3.add(this.rotation, this.rotation, vec3.scale(vec3.create(), this.right, this.mouse.position.y * 0.08));

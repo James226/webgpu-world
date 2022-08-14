@@ -59,7 +59,7 @@ class Game {
 
         document.getElementById('loading').style.display = 'none';
         this.loaded = true;
-        //this.generate(device);
+        this.generate(device, null);
 
         window.generate = (data) => this.generate(device, data);
       }

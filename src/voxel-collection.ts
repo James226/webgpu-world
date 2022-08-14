@@ -19,33 +19,6 @@ export default class VoxelCollection {
 
 
   async init(device) {
-
-    const img = document.createElement('img');
-    img.src = 'rock.jpg';
-    await img.decode();
-    const imageBitmap = await createImageBitmap(img);
-
-    const cubeTexture = device.createTexture({
-      size: [imageBitmap.width, imageBitmap.height, 1],
-      format: 'rgba8unorm',
-      usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
-    });
-    device.queue.copyExternalImageToTexture(
-      { source: imageBitmap },
-      { texture: cubeTexture },
-      [imageBitmap.width, imageBitmap.height, 1]
-    );
-
-    const sampler = device.createSampler({
-      magFilter: 'linear',
-      minFilter: 'linear',
-      addressModeU: 'repeat',
-      addressModeV: 'repeat',
-      addressModeW: 'repeat',
-    });
-
-
-
   const uniformLayout = device.createBindGroupLayout({
     entries: [
       {
@@ -59,30 +32,8 @@ export default class VoxelCollection {
     ],
   });
 
-
-
-    const bindGroupLayout = device.createBindGroupLayout({
-      entries: [
-        {
-          // Sampler
-          binding: 0,
-          visibility: GPUShaderStage.FRAGMENT,
-          sampler: {
-            type: 'filtering',
-          },
-        },
-        {
-          // Texture view
-          binding: 1,
-          visibility: GPUShaderStage.FRAGMENT,
-          texture: {
-            sampleType: 'float',
-          },
-        },
-      ],
-    });
     const pipelineLayout = device.createPipelineLayout({
-      bindGroupLayouts: [uniformLayout, bindGroupLayout],
+      bindGroupLayouts: [uniformLayout],
     });
 
     const buildPipeline = () => {
@@ -138,20 +89,6 @@ export default class VoxelCollection {
           format: 'depth24plus-stencil8',
         },
       });
-
-      this.uniformBindGroup = device.createBindGroup({
-        layout: this.pipeline.getBindGroupLayout(1),
-        entries: [
-          {
-            binding: 0,
-            resource: sampler,
-          },
-          {
-            binding: 1,
-            resource: cubeTexture.createView(),
-          }
-        ],
-      });
     };
 
     buildPipeline();
@@ -205,7 +142,6 @@ export default class VoxelCollection {
 
   draw(passEncoder: GPURenderPassEncoder) {
     passEncoder.setPipeline(this.pipeline);
-    passEncoder.setBindGroup(1, this.uniformBindGroup);
     for (const value of this.objects.values()) {
       value.draw(passEncoder)
     }
