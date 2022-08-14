@@ -7,6 +7,10 @@ import {mat4, vec3} from "gl-matrix";
 import Mouse from "./mouse";
 import {QueueItem} from "./queueItem";
 
+declare global {
+  interface Window { generate: any; }
+}
+
 class Game {
   private loaded: boolean;
   private voxelWorker: ContouringWorker;
@@ -55,7 +59,9 @@ class Game {
 
         document.getElementById('loading').style.display = 'none';
         this.loaded = true;
-        this.generate(device);
+        //this.generate(device);
+
+        window.generate = (data) => this.generate(device, data);
       }
     }
 
@@ -63,20 +69,20 @@ class Game {
     console.log(this.stride);
   }
 
-  generate(device: GPUDevice) {
+  generate(device: GPUDevice, data: any) {
     if (this.generating || !this.loaded) return;
 
     const t0 = performance.now();
 
       this.voxelWorker.onmessage = ({ data }) => {
-        const { type, i, vertices, normals, indices } = data;
+        const { type, i, vertices, normals, indices, stride } = data;
         switch (type) {
           case 'clear':
             break;
           case 'update':
             {
               if (vertices.byteLength) {
-                this.collection.set(device, `${data.ix}x${data.iy}x${data.iz}`, { x: data.x, y: data.y, z: data.z }, new Float32Array(vertices), new Float32Array(normals), new Uint16Array(indices));
+                this.collection.set(device, `${data.ix}x${data.iy}x${data.iz}`, { x: data.x, y: data.y, z: data.z }, stride, new Float32Array(vertices), new Float32Array(normals), new Uint16Array(indices));
               } else {
                 this.collection.free(device, `${data.ix}x${data.iy}x${data.iz}`, { x: data.x, y: data.y, z: data.z });
               }
@@ -87,7 +93,7 @@ class Game {
 
       this.collection.freeAll();
 
-      this.voxelWorker.postMessage({ stride: this.stride });
+      this.voxelWorker.postMessage({ stride: this.stride, position: this.controller.position, detail: data });
 
       this.stride /= 2;
       if (this.stride < 1) this.stride = 32;
@@ -99,7 +105,7 @@ class Game {
 
   async update(device: GPUDevice, projectionMatrix: mat4, timestamp: number) {
     if (this.keyboard.keypress('g')) {
-      this.generate(device);
+      this.generate(device, null);
     }
 
     const queue = (item: QueueItem) => {

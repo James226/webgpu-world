@@ -10,6 +10,7 @@ export default class VoxelCollection {
   private readonly pool: VoxelObject[];
   private uniformBindGroup: GPUBindGroup;
   private pipeline: GPURenderPipeline;
+  private uniformBuffer: GPUBuffer;
 
   constructor(objects: Map<any, VoxelObject> = new Map<any, VoxelObject>()) {
     this.objects = objects;
@@ -50,7 +51,7 @@ export default class VoxelCollection {
       {
         // Transform
         binding: 0,
-        visibility: GPUShaderStage.VERTEX,
+        visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
         buffer: {
           type: 'uniform',
         },
@@ -148,7 +149,7 @@ export default class VoxelCollection {
           {
             binding: 1,
             resource: cubeTexture.createView(),
-          },
+          }
         ],
       });
     };
@@ -162,7 +163,7 @@ export default class VoxelCollection {
     }
   }
 
-  set(device, key, position, vertices, normals, indices) {
+  set(device, key, position, stride, vertices, normals, indices) {
     let obj: VoxelObject = this.objects.get(key);
     if (!obj) {
       obj = this.pool.pop();
@@ -175,6 +176,7 @@ export default class VoxelCollection {
       this.objects.set(key, obj);
     }
 
+    obj.stride = stride;
     obj.setVertexBuffer(device, vertices, normals);
     obj.setIndexBuffer(device, indices);
   }

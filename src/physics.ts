@@ -40,7 +40,7 @@ export default class Voxel {
 
     const permutations = new Int32Array(512);
 
-    const random = new Random(6452);
+    const random = new Random('James');
     for (let i = 0; i < 256; i++)
       permutations[i] = (256 * (random()));
 
