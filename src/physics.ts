@@ -19,7 +19,7 @@ export default class Voxel {
     const computeVoxels = ComputeVoxels.replace("%GET_DENSITY%", Density);
 
     this.velocity = vec3.fromValues(0,0,0);
-    this.position = vec4.fromValues(0, 0, -300, 0);
+    this.position = vec4.fromValues(-300, 0, 0, 0);
     const start = performance.now();
     console.log('Loading physics engine');
     this.computePipeline = await device.createComputePipelineAsync({
@@ -135,16 +135,11 @@ export default class Voxel {
     });
   }
 
-  update(device, queue): Promise<void> {
+  async update(device, queue): Promise<void> {
     if (this.running) return Promise.resolve();
 
-    return new Promise(resolve => {
-      this.running = true;
-      this.generate(device, queue)
-      .then(() => {
-        this.running = false;
-        resolve(null);
-      });
-    });
+    this.running = true;
+    await this.generate(device, queue);
+    this.running = false;
   }
 }

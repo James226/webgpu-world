@@ -596,28 +596,15 @@ fn computeMaterials(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32
 
 @stage(compute) @workgroup_size(1)
 fn computePhysics(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
-	let actor: u32 = GlobalInvocationID.x;
+  let actor: u32 = GlobalInvocationID.x;
+
+  if (getDensity(physics.actors[actor].position) < 0.0) {
+    physics.actors[actor].position = physics.actors[actor].position + vec3<f32>(10.0, 0.0, 0.0);
+  }
 
   let pos = physics.actors[actor].position + physics.actors[actor].velocity;
 
   if (getDensity(pos) >= 0.0) {
     physics.actors[actor].position = pos;
   }
-  return;
-
-	if (getDensity(physics.actors[actor].position) < 0.0) {
-		physics.actors[actor].position.y = physics.actors[actor].position.y - 10.0;
-	}
-
-	let gravity: vec3<f32> = normalize(vec3<f32>() - physics.actors[actor].position) * 100.0;
-
-	let velocity: vec3<f32> = physics.actors[actor].velocity + gravity;
-	let position: vec3<f32> = physics.actors[actor].position + velocity;
-
-	let density: f32 = getDensity(position);
-	if (density > 0.0) {
- 		physics.actors[actor].position = position;
-	} else {
-		physics.actors[actor].position = physics.actors[actor].position + physics.actors[actor].velocity;
-	}
 }
