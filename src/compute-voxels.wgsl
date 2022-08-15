@@ -602,9 +602,10 @@ fn computePhysics(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>)
     physics.actors[actor].position = physics.actors[actor].position + vec3<f32>(10.0, 0.0, 0.0);
   }
 
+  let direction = normalize(physics.actors[actor].velocity);
   let pos = physics.actors[actor].position + physics.actors[actor].velocity;
 
-  if (getDensity(pos) >= 0.0) {
+  if (getDensity(pos + (direction * 50.0)) >= 0.0) {
     physics.actors[actor].position = pos;
   }
 }
