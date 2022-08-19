@@ -19,7 +19,7 @@ export default class Voxel {
     const computeVoxels = ComputeVoxels.replace("%GET_DENSITY%", Density);
 
     this.velocity = vec3.fromValues(0,0,0);
-    this.position = vec4.fromValues(0, 0, -228, 0);
+    this.position = vec4.fromValues(-300, 0, 0, 0);
     const start = performance.now();
     console.log('Loading physics engine');
     this.computePipeline = await device.createComputePipelineAsync({
@@ -37,7 +37,6 @@ export default class Voxel {
       size: uniformBufferSize,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
-
 
     const permutations = new Int32Array(512);
 
@@ -136,13 +135,11 @@ export default class Voxel {
     });
   }
 
-  update(device, queue) {
-    if (this.running) return;
+  async update(device, queue): Promise<void> {
+    if (this.running) return Promise.resolve();
 
     this.running = true;
-    this.generate(device, queue)
-    .then(() => {
-      this.running = false;
-    });
+    await this.generate(device, queue);
+    this.running = false;
   }
 }

@@ -32,10 +32,10 @@ renderer.init(canvas).then(async () => {
   configureRenderer();
 
   const doFrame = (timestamp: number) => {
-    game.update(renderer.device, projectionMatrix, timestamp);
-
-    renderer.render(e => game.draw(e));
-    requestAnimationFrame(doFrame);
+    game.update(renderer.device, projectionMatrix, timestamp).then(() => {
+      renderer.render(e => game.draw(e));
+      requestAnimationFrame(doFrame);
+    });
   };
   requestAnimationFrame(doFrame);
 });

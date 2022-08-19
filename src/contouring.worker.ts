@@ -45,7 +45,7 @@ const ctx: Worker = self as any;
       return;
     }
 
-    const stride = 8;
+    const stride = 32;
     const size = 128;
     console.log(`World Size: ${size} (${size * 32})`);
     const chunkSize = 31;
@@ -60,13 +60,13 @@ const ctx: Worker = self as any;
 
     const worldGenerator = new WorldGenerator(stride);
     //info = worldGenerator.init(0,0,0);
-    let info = worldGenerator.init(-(position[0] / chunkSize), -(position[1] / chunkSize), -(position[2] / chunkSize));
+    let info = worldGenerator.init((position[0] / chunkSize), (position[1] / chunkSize), (position[2] / chunkSize));
 
     console.log(`Init world at ${info.x}:${info.y}:${info.z} for stride ${stride}`)
 
     do {
-      let r = worldGenerator.next(info);
-      var result = r[0];
+      const r = worldGenerator.next(info);
+      const result = r[0];
       info = r[1];
 
       const {x, y, z} = result;
