@@ -17,7 +17,7 @@ describe('compute-voxels', () => {
         }
        }`;
 
-      const computeVoxels = ComputeVoxels.replace("%GET_DENSITY%", density)
+      const computeVoxels = ComputeVoxels.replace("#import density", density)
       const computePipeline = await device.createComputePipelineAsync({
         layout: 'auto',
         compute: {

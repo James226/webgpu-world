@@ -12,6 +12,7 @@
   "devDependencies": {
     "@types/jasmine": "^4.0.2",
     "@types/webpack-env": "^1.16.4",
+    "@webgpu/types": "^0.1.21",
     "css-loader": "^6.7.1",
     "jasmine-core": "^4.0.1",
     "raw-loader": "^4.0.2",
@@ -24,7 +25,6 @@
     "worker-loader": "^3.0.8"
   },
   "dependencies": {
-    "@webgpu/types": "^0.1.21",
     "gl-matrix": "^3.3.0",
     "seedrandom": "^3.0.5",
     "tone": "^14.7.77"

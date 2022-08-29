@@ -66,7 +66,6 @@ class Game {
     }
 
     this.stride = 16;
-    console.log(this.stride);
   }
 
   generate(device: GPUDevice, data: any) {

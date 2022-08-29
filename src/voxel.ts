@@ -96,7 +96,7 @@ export default class Voxel {
   private voxelReadBuffer: GPUBuffer;
 
   async init(device: GPUDevice) {
-    const computeVoxelsCode = ComputeVoxels.replace("%GET_DENSITY%", Density);
+    const computeVoxelsCode = ComputeVoxels.replace("#import density", Density);
     const start = performance.now();
     console.log('Start loading voxel engine', performance.now() - start);
 
@@ -208,12 +208,6 @@ export default class Voxel {
       layout: this.computePipeline.getBindGroupLayout(0),
       entries: [
         {
-          binding: 0,
-          resource: {
-            buffer: this.permutationsBuffer
-          },
-        },
-        {
           binding: 1,
           resource: {
             buffer: this.cornerMaterials
@@ -297,12 +291,6 @@ export default class Voxel {
     this.computeVoxelsBindGroup = device.createBindGroup({
       layout: this.computeVoxelsPipeline.getBindGroupLayout(0),
       entries: [
-        {
-          binding: 0,
-          resource: {
-            buffer: this.permutationsBuffer
-          },
-        },
         {
           binding: 2,
           resource: {

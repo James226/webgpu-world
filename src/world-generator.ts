@@ -55,8 +55,6 @@ for (let i = 0; i <= 6; i++) {
   points[i] = generatePoints(i);
 }
 
-console.log(points);
-
 export default class WorldGenerator {
   private readonly minStride: number;
 

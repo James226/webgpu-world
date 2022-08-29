@@ -78,7 +78,7 @@ export default class VoxelCollection {
         fragment: {
           module:
               device.createShaderModule({
-                code: FragmentShader.replace("%GET_DENSITY%", Density)
+                code: FragmentShader.replace("#import density", Density)
               }),
           entryPoint: 'main',
           targets: [

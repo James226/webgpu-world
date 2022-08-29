@@ -16,7 +16,7 @@ export default class Renderer {
     this.context.configure({
       device: this.device,
       format: this.presentationFormat,
-      compositingAlphaMode: 'opaque'
+      alphaMode: 'opaque'
     });
 
     this.depthTexture = this.device.createTexture({

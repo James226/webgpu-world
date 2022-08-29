@@ -88,29 +88,6 @@ fn random(i: vec2<f32>) -> f32 {
   return fract(sin(dot(i,vec2(12.9898,78.233)))*43758.5453123);
 }
 
-fn Box(worldPosition: vec3<f32>, origin: vec3<f32>, halfDimensions: vec3<f32>) -> f32
-{
-	let local_pos: vec3<f32> = worldPosition - origin;
-	let pos: vec3<f32> = local_pos;
-
-	let d: vec3<f32> = vec3<f32>(abs(pos.x), abs(pos.y), abs(pos.z)) - halfDimensions;
-	let m: f32 = max(d.x, max(d.y, d.z));
-	return clamp(min(m, length(max(d, vec3<f32>(0.0, 0.0, 0.0)))), -100.0, 100.0);
-}
-
-fn Torus(worldPosition: vec3<f32>, origin: vec3<f32>, t: vec3<f32>) -> f32
-{
-	let p: vec3<f32> = worldPosition - origin;
-
-  let q: vec2<f32> = vec2<f32>(length(p.xz)-t.x,p.y);
-  return length(q)-t.y;
-}
-
-fn Sphere(worldPosition: vec3<f32>, origin: vec3<f32>, radius: f32) -> f32
-{
-	return clamp(length(worldPosition - origin) - radius, -100.0, 100.0);
-}
-
 fn Vec3Dot(a: vec3<f32>, b: vec3<f32>) -> f32
 {
 	return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
@@ -153,15 +130,15 @@ fn Perlin(x1: f32, y1: f32, z1: f32) -> f32
 	Y = Y & 255;
 	Z = Z & 255;
 	
-	let gi000: i32 = (perm.Perm[X + perm.Perm[Y + perm.Perm[Z]]] % 12);
-	let gi001: i32 = (perm.Perm[X + perm.Perm[Y + perm.Perm[Z + 1]]] % 12);
-	let gi010: i32 = (perm.Perm[X + perm.Perm[Y + 1 + perm.Perm[Z]]] % 12);
-	let gi011: i32 = (perm.Perm[X + perm.Perm[Y + 1 + perm.Perm[Z + 1]]] % 12);
-	let gi100: i32 = (perm.Perm[X + 1 + perm.Perm[Y + perm.Perm[Z]]] % 12);
-	let gi101: i32 = (perm.Perm[X + 1 + perm.Perm[Y + perm.Perm[Z + 1]]] % 12);
-	let gi110: i32 = (perm.Perm[X + 1 + perm.Perm[Y + 1 + perm.Perm[Z]]] % 12);
-	let gi111: i32 = (perm.Perm[X + 1 + perm.Perm[Y + 1 + perm.Perm[Z + 1]]] % 12);
-	
+	let gi000: i32 = (perm.Perm[X + perm.Perm[Y + perm.Perm[Z] ] ] % 12);
+	let gi001: i32 = (perm.Perm[X + perm.Perm[Y + perm.Perm[Z + 1] ] ] % 12);
+	let gi010: i32 = (perm.Perm[X + perm.Perm[Y + 1 + perm.Perm[Z] ] ] % 12);
+	let gi011: i32 = (perm.Perm[X + perm.Perm[Y + 1 + perm.Perm[Z + 1] ] ] % 12);
+	let gi100: i32 = (perm.Perm[X + 1 + perm.Perm[Y + perm.Perm[Z] ] ] % 12);
+	let gi101: i32 = (perm.Perm[X + 1 + perm.Perm[Y + perm.Perm[Z + 1] ] ] % 12);
+	let gi110: i32 = (perm.Perm[X + 1 + perm.Perm[Y + 1 + perm.Perm[Z] ] ] % 12);
+	let gi111: i32 = (perm.Perm[X + 1 + perm.Perm[Y + 1 + perm.Perm[Z + 1] ] ] % 12);
+
 	let n000: f32 = dot(Grad3[gi000], vec3<f32>(x, y, z));
 	let n100: f32 = dot(Grad3[gi100], vec3<f32>(x - 1.0, y, z));
 	let n010: f32 = dot(Grad3[gi010], vec3<f32>(x, y - 1.0, z));
@@ -460,7 +437,7 @@ fn qef_solve() -> vec4<f32>
 	return vec4<f32>(r.x, r.y, r.z, error);
 }
 
-%GET_DENSITY%
+#import density
 
 fn ApproximateZeroCrossingPosition(p0: vec3<f32>, p1: vec3<f32>) -> vec3<f32>
 {

@@ -16,7 +16,7 @@ export default class Voxel {
   private running: boolean;
 
   async init(device: GPUDevice) {
-    const computeVoxels = ComputeVoxels.replace("%GET_DENSITY%", Density);
+    const computeVoxels = ComputeVoxels.replace("#import density", Density);
 
     this.velocity = vec3.fromValues(0,0,0);
     this.position = vec4.fromValues(-300, 0, 0, 0);
@@ -71,12 +71,6 @@ export default class Voxel {
     this.computeBindGroup = device.createBindGroup({
       layout: this.computePipeline.getBindGroupLayout(0),
       entries: [
-        {
-          binding: 0,
-          resource: {
-            buffer: this.permutationsBuffer
-          },
-        },
         {
           binding: 6,
           resource: {
