@@ -75,14 +75,14 @@ class Game {
     const t0 = performance.now();
 
       this.voxelWorker.onmessage = ({ data }) => {
-        const { type, i, vertices, normals, indices, stride } = data;
+        const { type, i, vertices, normals, indices, corners, stride } = data;
         switch (type) {
           case 'clear':
             break;
           case 'update':
             {
               if (vertices.byteLength) {
-                this.collection.set(device, `${data.ix}x${data.iy}x${data.iz}`, { x: data.x, y: data.y, z: data.z }, stride, new Float32Array(vertices), new Float32Array(normals), new Uint16Array(indices));
+                this.collection.set(device, `${data.ix}x${data.iy}x${data.iz}`, { x: data.x, y: data.y, z: data.z }, stride, new Float32Array(vertices), new Float32Array(normals), new Uint16Array(indices), new Uint32Array(corners));
               } else {
                 this.collection.free(device, `${data.ix}x${data.iy}x${data.iz}`, { x: data.x, y: data.y, z: data.z });
               }

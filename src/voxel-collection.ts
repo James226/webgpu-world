@@ -2,6 +2,8 @@ import VertexShader from '!!raw-loader!./vertex.wgsl';
 import FragmentShader from '!!raw-loader!./fragment.wgsl';
 import { vec3 } from 'gl-matrix';
 import VoxelObject from './voxel-object';
+import Density from '!!raw-loader!./density.wgsl';
+
 
 const swapChainFormat = 'bgra8unorm';
 
@@ -27,6 +29,13 @@ export default class VoxelCollection {
         visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
         buffer: {
           type: 'uniform',
+        },
+      },
+      {
+        binding: 1,
+        visibility: GPUShaderStage.FRAGMENT,
+        buffer: {
+          type: 'read-only-storage',
         },
       },
     ],
@@ -69,7 +78,7 @@ export default class VoxelCollection {
         fragment: {
           module:
               device.createShaderModule({
-                code: FragmentShader
+                code: FragmentShader.replace("%GET_DENSITY%", Density)
               }),
           entryPoint: 'main',
           targets: [
@@ -100,7 +109,7 @@ export default class VoxelCollection {
     }
   }
 
-  set(device, key, position, stride, vertices, normals, indices) {
+  set(device, key, position, stride, vertices, normals, indices, corners) {
     let obj: VoxelObject = this.objects.get(key);
     if (!obj) {
       obj = this.pool.pop();
@@ -113,6 +122,7 @@ export default class VoxelCollection {
       this.objects.set(key, obj);
     }
 
+    obj.setCorners(device, corners);
     obj.stride = stride;
     obj.setVertexBuffer(device, vertices, normals);
     obj.setIndexBuffer(device, indices);

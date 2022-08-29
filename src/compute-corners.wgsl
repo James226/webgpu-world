@@ -34,7 +34,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
     if (j >= 8u) { break; }
 
     let cornerPos: vec3<u32> = vec3<u32>(GlobalInvocationID.x + CHILD_MIN_OFFSETS[j].x, GlobalInvocationID.y + CHILD_MIN_OFFSETS[j].y, GlobalInvocationID.z + CHILD_MIN_OFFSETS[j].z);
-    let material: u32 = cornerMaterials.cornerMaterials[cornerPos.z * 33u * 33u + cornerPos.y * 33u + cornerPos.x];
+    let material: u32 = min(1, cornerMaterials.cornerMaterials[cornerPos.z * 33u * 33u + cornerPos.y * 33u + cornerPos.x]);
     corners = corners | (material << j);
 
     continuing {

@@ -84,6 +84,10 @@ let edgevmap: array<vec2<i32>, 12> = array<vec2<i32>, 12>
 	vec2<i32>(0,1), vec2<i32>(2,3), vec2<i32>(4,5), vec2<i32>(6,7)
 );
 
+fn random(i: vec2<f32>) -> f32 {
+  return fract(sin(dot(i,vec2(12.9898,78.233)))*43758.5453123);
+}
+
 fn Box(worldPosition: vec3<f32>, origin: vec3<f32>, halfDimensions: vec3<f32>) -> f32
 {
 	let local_pos: vec3<f32> = worldPosition - origin;
@@ -501,9 +505,9 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 	if (trueIndex < cornerIndex.cornerCount)
 	{
 		let ures: u32 = 32u;
-		
+
 		let nodeSize: u32 = u32(uniforms.stride);
-	
+
 		let voxelIndex: u32 = cornerIndex.cornerIndexes[trueIndex];
 		let z: u32 = voxelIndex / (ures * ures);
 		let y: u32 = (voxelIndex - (z * ures * ures)) / ures;
@@ -515,7 +519,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 		voxels.voxels[trueIndex].voxMin = nodePos;
 		let MAX_CROSSINGS: i32 = 6;
 		var edgeCount: i32 = 0;
-		
+
 		pointaccum = vec4<f32>(0.0, 0.0, 0.0, 0.0);
 		ATA = array<f32, 6>(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 		Atb = vec4<f32>(0.0, 0.0, 0.0, 0.0);
@@ -533,18 +537,18 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
 			let m1: u32 = (corners >> u32(c1)) & 1u;
 			let m2: u32 = (corners >> u32(c2)) & 1u;
-			
+
 			if (!((m1 == 0u && m2 == 0u) || (m1 == 1u && m2 == 1u)))
 			{
 				let p1: vec3<f32> = nodePos + vec3<f32>(f32(CHILD_MIN_OFFSETS[c1].x * nodeSize), f32(CHILD_MIN_OFFSETS[c1].y * nodeSize), f32(CHILD_MIN_OFFSETS[c1].z * nodeSize));
 				let p2: vec3<f32> = nodePos + vec3<f32>(f32(CHILD_MIN_OFFSETS[c2].x * nodeSize), f32(CHILD_MIN_OFFSETS[c2].y * nodeSize), f32(CHILD_MIN_OFFSETS[c2].z * nodeSize));
 				let p: vec3<f32> = ApproximateZeroCrossingPosition(p1, p2);
 				let n: vec3<f32> = CalculateSurfaceNormal(p);
-				
+
 				qef_add(vec4<f32>(n.x, n.y, n.z, 0.0), vec4<f32>(p.x, p.y, p.z, 0.0));
-				
+
 				averageNormal = averageNormal + n;
-				
+
 				edgeCount = edgeCount + 1;
 			}
 
@@ -552,17 +556,17 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 				j = j + 1;
 			}
 		}
-		
-		
+
+
 		averageNormal = normalize(averageNormal / vec3<f32>(f32(edgeCount), f32(edgeCount), f32(edgeCount)));
-		
+
 		let com: vec3<f32> = vec3<f32>(pointaccum.x / pointaccum.w, pointaccum.y / pointaccum.w, pointaccum.z / pointaccum.w);
-		
+
 		let result: vec4<f32> = qef_solve();
 		var solved_position: vec3<f32> = result.xyz;
 		let error: f32 = result.w;
 
-		
+
 		let Min: vec3<f32> = nodePos;
 		let Max: vec3<f32> = nodePos + vec3<f32>(1.0, 1.0, 1.0);
 		if (solved_position.x < Min.x || solved_position.x > Max.x ||
@@ -571,7 +575,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 		{
 			solved_position = com;
 		}
-		
+
 		voxels.voxels[trueIndex].vertPoint = solved_position;
 		voxels.voxels[trueIndex].avgNormal = averageNormal;
 		voxels.voxels[trueIndex].numPoints = f32(edgeCount);
@@ -588,7 +592,12 @@ fn computeMaterials(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32
     let density: f32 = getDensity(cornerPos + uniforms.chunkPosition);
 
 		if (density < 0.0) {
-			cornerMaterials.cornerMaterials[index] = 1u;
+			if (length(cornerPos + uniforms.chunkPosition) < 2000.0) {
+        //cornerMaterials.cornerMaterials[index] = u32(random(vec2(f32(index))) * 255.0) + 1;
+			  cornerMaterials.cornerMaterials[index] = 256u;
+			} else {
+        cornerMaterials.cornerMaterials[index] = u32(length(cornerPos) / uniforms.stride * 256.0);
+			}
 		} else {
 			cornerMaterials.cornerMaterials[index] = 0u;
 		}
