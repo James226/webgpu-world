@@ -3,17 +3,20 @@ import {mat4, vec3} from 'gl-matrix';
 export default class VoxelObject {
   public position: vec3;
   public stride: number;
+  public cornersBuffer: GPUBuffer;
   private vertexBuffer: GPUBuffer;
   private indexCount: number;
   private indexBuffer: GPUBuffer;
   private uniformBuffer: GPUBuffer;
   private uniformBindGroup: GPUBindGroup;
+  private pipeline: GPURenderPipeline;
 
   constructor(position: vec3) {
     this.position = position;
   }
 
   init(device: GPUDevice, pipeline) {
+    this.pipeline = pipeline;
     const cubeVertexArray = new Float32Array([]);
 
     this.vertexBuffer = device.createBuffer({
@@ -36,7 +39,13 @@ export default class VoxelObject {
       this.indexBuffer.unmap();
     }
 
-    const uniformBufferSize = 4 * 16 + 4;
+    this.cornersBuffer = device.createBuffer({
+      size: 32*32*32*Uint32Array.BYTES_PER_ELEMENT,
+      usage: GPUBufferUsage.STORAGE,
+      mappedAtCreation: false
+    });
+
+    const uniformBufferSize = 4 * 16 + 4*4 + 4 * 4;
     this.uniformBuffer = device.createBuffer({
       size: uniformBufferSize,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
@@ -51,8 +60,52 @@ export default class VoxelObject {
             buffer: this.uniformBuffer,
           },
         },
+        {
+          binding: 1,
+          resource: {
+            buffer: this.cornersBuffer,
+          },
+        },
       ],
     });
+
+  }
+
+  setCorners(device, corners) {
+    const newCornersBuffer = device.createBuffer({
+      size: 32*32*32 * Uint32Array.BYTES_PER_ELEMENT,
+      usage: GPUBufferUsage.STORAGE,
+      mappedAtCreation: true,
+    });
+    const mapping = new Uint32Array(newCornersBuffer.getMappedRange());
+    for (let i = 0; i < corners.length; i++) {
+      mapping[i] = corners[i];
+    }
+    newCornersBuffer.unmap();
+
+    const oldCornersBuffer = this.cornersBuffer;
+    this.cornersBuffer = newCornersBuffer;
+
+
+    this.uniformBindGroup = device.createBindGroup({
+      layout: this.pipeline.getBindGroupLayout(0),
+      entries: [
+        {
+          binding: 0,
+          resource: {
+            buffer: this.uniformBuffer,
+          },
+        },
+        {
+          binding: 1,
+          resource: {
+            buffer: this.cornersBuffer,
+          },
+        },
+      ],
+    });
+
+    oldCornersBuffer.destroy();
   }
 
   setVertexBuffer(device, vertices, normals) {
@@ -122,6 +175,14 @@ export default class VoxelObject {
       strideBuffer.buffer,
       strideBuffer.byteOffset,
       strideBuffer.byteLength
+    );
+
+    device.queue.writeBuffer(
+      this.uniformBuffer,
+      4 * 16 + 4*4,
+      (<Float32Array>this.position).buffer,
+      (<Float32Array>this.position).byteOffset,
+      (<Float32Array>this.position).byteLength
     );
   }
 

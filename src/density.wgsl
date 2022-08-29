@@ -1,24 +1,6 @@
 let freq = 0.001;
 
 fn getDensity(worldPosition: vec3<f32>) -> f32 {
-  //var floor: f32 = FractalNoise(1, 0.7343, 1.0, 1.0, worldPosition) * 4.0 - 1.0;
-
-  //floor = max(-Sphere(worldPosition, vec3<f32>(0.0, 0.0, 0.0), 400.0), floor);
-
-  //if (worldPosition.y < 0.0) {
-  //  floor = -1.0;
-  //}
-  
-  //if (worldPosition.y > 50.0) {
-  //  floor = 1.0;
-  //}
-
-
-  //floor = min(Sphere(worldPosition, vec3<f32>(0.0, 0.0, 25.0), 50.0), floor);
-
-  //return floor;
-
-	//return min(Box(worldPosition, vec3<f32>(20000.0, 0.0, 0.0), vec3<f32>(10000.0, 10000.0, 10000.0)), Sphere(worldPosition, vec3<f32>(0.0, 0.0, 0.0), 10000.0));
 	var worldRadius: f32 = 10000.0;
 	var world: vec3<f32> = worldPosition - vec3<f32>(worldRadius);
 	var worldDist: f32 = clamp(-worldRadius + length(world), -1000.0, 1000.0);

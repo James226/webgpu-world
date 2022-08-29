@@ -99,12 +99,15 @@ export default class Voxel {
     const computeVoxelsCode = ComputeVoxels.replace("%GET_DENSITY%", Density);
     const start = performance.now();
     console.log('Start loading voxel engine', performance.now() - start);
+
+    const module = device.createShaderModule({
+      code: computeVoxelsCode,
+    });
+
     this.computePipeline = await device.createComputePipelineAsync({
       layout: 'auto',
       compute: {
-        module: device.createShaderModule({
-          code: computeVoxelsCode,
-        }),
+        module,
         entryPoint: 'computeMaterials',
       },
     });
@@ -279,10 +282,6 @@ export default class Voxel {
 
     //console.log('31', performance.now() - start);
 
-    const module = device.createShaderModule({
-      code: computeVoxelsCode,
-    });
-
     //console.log('31.5', performance.now() - start);
     this.computeVoxelsPipeline = await device.createComputePipelineAsync({
       layout: 'auto',
@@ -426,7 +425,11 @@ export default class Voxel {
 
       queue({
         items: [computeEncoder.finish(), copyEncoder.finish()],
-        callback: () => {
+        callback: async () => {
+          await this.cornerMaterialsRead.mapAsync(GPUMapMode.READ);
+          const corners = new Uint32Array(this.cornerMaterialsRead.getMappedRange()).slice();
+          this.cornerMaterialsRead.unmap();
+
           this.gpuReadBuffer.mapAsync(GPUMapMode.READ).then(() => {
 
             const arrayBuffer = this.gpuReadBuffer.getMappedRange();
@@ -435,7 +438,7 @@ export default class Voxel {
             this.gpuReadBuffer.unmap();
 
             if (voxelCount === 0) {
-              resolve({vertices: new Float32Array(), normals: new Float32Array(), indices: new Uint16Array()});
+              resolve({vertices: new Float32Array(), normals: new Float32Array(), indices: new Uint16Array(), corners: new Uint32Array()});
               return;
             }
 
@@ -469,7 +472,7 @@ export default class Voxel {
 
                   this.voxelReadBuffer.unmap();
 
-                  resolve(result);
+                  resolve({...result, corners});
                 });
               }
             });

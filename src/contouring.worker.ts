@@ -72,11 +72,11 @@ const ctx: Worker = self as any;
       const {x, y, z} = result;
       const halfChunk = result.stride * chunkSize * 0.5;
 
-      const { vertices, normals, indices } = await voxel.generate(device, queue, vec3.fromValues(x * chunkSize -halfChunk, y * chunkSize -halfChunk, z * chunkSize -halfChunk), result.stride);
+      const { vertices, normals, indices, corners } = await voxel.generate(device, queue, vec3.fromValues(x * chunkSize -halfChunk, y * chunkSize -halfChunk, z * chunkSize -halfChunk), result.stride);
       if (vertices.length > 0) {
         console.log(`Generating ${x}:${y}:${z} (${x * chunkSize -halfChunk}:${y * chunkSize -halfChunk}:${z * chunkSize -halfChunk}) (${result.stride} / ${halfChunk} / ${info.previousOffset})`)
       }
-      ctx.postMessage(({ type: 'update', i: `${x}:${y}:${z}`, ix: x, iy: y, iz: z, x: 0, y: 0, z: 0, vertices: vertices.buffer, normals: normals.buffer, indices: indices.buffer, stride: result.stride }), [vertices.buffer, normals.buffer, indices.buffer])
+      ctx.postMessage(({ type: 'update', i: `${x}:${y}:${z}`, ix: x, iy: y, iz: z, x: 0, y: 0, z: 0, vertices: vertices.buffer, normals: normals.buffer, indices: indices.buffer, corners: corners.buffer, stride: result.stride }), [vertices.buffer, normals.buffer, indices.buffer, corners.buffer])
 
     } while (info.stride <= 2048);
 

@@ -9,7 +9,7 @@ export default class Renderer {
     this.device = await adapter.requestDevice();
 
     this.context = canvas.getContext('webgpu');
-    this.presentationFormat = this.context.getPreferredFormat(adapter);
+    this.presentationFormat =  navigator.gpu.getPreferredCanvasFormat();
   }
 
   configure(width: number, height: number) {
