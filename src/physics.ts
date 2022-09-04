@@ -19,7 +19,7 @@ export default class Voxel {
     const computeVoxels = ComputeVoxels.replace("#import density", Density);
 
     this.velocity = vec3.fromValues(0,0,0);
-    this.position = vec4.fromValues(-300, 0, 0, 0);
+    this.position = vec4.fromValues(2000000, 0, 0, 0);
     const start = performance.now();
     console.log('Loading physics engine');
     this.computePipeline = await device.createComputePipelineAsync({

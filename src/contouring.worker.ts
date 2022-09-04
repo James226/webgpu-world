@@ -73,7 +73,7 @@ const ctx: Worker = self as any;
       // }
       ctx.postMessage(({ type: 'update', i: `${x}:${y}:${z}`, ix: x, iy: y, iz: z, x: 0, y: 0, z: 0, vertices: vertices.buffer, normals: normals.buffer, indices: indices.buffer, corners: corners.buffer, stride: result.stride }), [vertices.buffer, normals.buffer, indices.buffer, corners.buffer])
 
-    } while (info.stride <= 2048);
+    } while (info.stride <= 32768);
 
     generating = false;
 

@@ -32,7 +32,7 @@ fn main(@location(0) position : vec4<f32>,
         @location(1) normal : vec4<f32>) -> VertexOutput {
 
   var light: Lights;
-  light.position = vec3<f32>(2.0, 1.0, 4.0);
+  light.position = normalize(-position.xyz);
   light.diffuse = vec3<f32>(1.0, 1.0, 1.0);
 
   var output : VertexOutput;

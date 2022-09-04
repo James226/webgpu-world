@@ -164,6 +164,31 @@ fn findMaterial(pos: vec3<f32>, normal: vec3<f32>) -> u32 {
 	}
 }
 
+let lightIterations = 10.0;
+
+fn hasLight(p: vec3<f32>) -> f32 {
+  let direction = normalize(-p);
+  var i = 1.0;
+
+
+  loop {
+    let position = p + direction * pow(2, i);
+    let density = getDensity(position);
+
+    if (density < 0) {
+      return mix(0.02, 0.05, i / lightIterations);
+    }
+
+    if (i > lightIterations) {
+      return 1;
+    }
+
+    continuing {
+      i = i + 1;
+    }
+  }
+}
+
 @fragment
 fn main(@location(0) vPos: vec4<f32>,
         @location(1) vNormal: vec3<f32>,
@@ -177,11 +202,10 @@ fn main(@location(0) vPos: vec4<f32>,
   let zaxis = samp(vPos.xy * normalRepeat, material);
 	var tex = xaxis * blending.x + yaxis * blending.y + zaxis * blending.z;
 
-  let t = uniforms.time;
   if (material == MATERIAL_FIRE) {
     return vec4(tex, 1.0);
   }
   //let cell = vec3<u32>(vPos.xyz - uniforms.position / f32(uniforms.stride));
   //let foo = corners[cell.x * 32 * 32 + cell.y * 32 + cell.z];
-  return vec4<f32>(tex * color, 1.0);
+  return vec4<f32>(tex * color * max(0.0, hasLight(vPos.xyz + vNormal.xyz * 10.0)), 1.0);
 }
