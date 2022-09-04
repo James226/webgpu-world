@@ -475,7 +475,7 @@ fn CalculateSurfaceNormal(p: vec3<f32>) -> vec3<f32>
 	return normalize(vec3<f32>(dx, dy, dz));
 }
 
-@stage(compute) @workgroup_size(128)
+@compute @workgroup_size(128)
 fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 	let trueIndex: u32 = GlobalInvocationID.x;
 
@@ -560,7 +560,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 	}
 }
 
-@stage(compute) @workgroup_size(1)
+@compute @workgroup_size(1)
 fn computeMaterials(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 		let width = uniforms.width;
     let index: u32 = GlobalInvocationID.z * width * width + GlobalInvocationID.y * width + GlobalInvocationID.x;
@@ -580,7 +580,7 @@ fn computeMaterials(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32
 		}
 }
 
-@stage(compute) @workgroup_size(1)
+@compute @workgroup_size(1)
 fn computePhysics(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
   let actor: u32 = GlobalInvocationID.x;
 

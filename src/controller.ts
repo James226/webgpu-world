@@ -2,6 +2,7 @@ import {glMatrix, mat4, quat, vec3} from "gl-matrix";
 import Keyboard from "./keyboard";
 import Mouse from "./mouse";
 import * as Tone from "tone";
+import Raycast from "./raycast";
 
 export default class Controller {
   public viewMatrix: mat4;
@@ -52,7 +53,7 @@ export default class Controller {
     this.noise.connect(dist);
   }
 
-  update(device: GPUDevice, projectionMatrix: mat4, timestamp: number) {
+  update(device: GPUDevice, projectionMatrix: mat4, timestamp: number, queue, raycast: Raycast) {
 
     const distance = this.keyboard.keydown('shift') ? 100 : 10;
     vec3.zero(this.velocity);
@@ -109,6 +110,11 @@ export default class Controller {
     if (this.keyboard.keydown('`')) {
       this.tool = false;
       document.getElementById('tool').innerText = 'false';
+    }
+
+    if (this.keyboard.keypress(' ')) {
+      raycast.cast(device, queue, this.position, vec3.scale(vec3.create(), this.forward, -1))
+        .then(r => r !== null ? console.log(r.position) : console.log('No intersection found'));
     }
 
     quat.rotateX(this.rotation, this.rotation, glMatrix.toRadian(-this.mouse.position.y * 0.08));

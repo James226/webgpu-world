@@ -45,7 +45,7 @@ export default class VoxelObject {
       mappedAtCreation: false
     });
 
-    const uniformBufferSize = 4 * 16 + 4*4 + 4 * 4;
+    const uniformBufferSize = 4 * 16 + 4 * 4 + 4 * 4;
     this.uniformBuffer = device.createBuffer({
       size: uniformBufferSize,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
@@ -156,7 +156,7 @@ export default class VoxelObject {
     return modelViewProjectionMatrix;
   }
 
-  update(device: GPUDevice, projectionMatrix: mat4) {
+  update(device: GPUDevice, projectionMatrix: mat4, timestamp: number) {
     const transformationMatrix = this.getTransformationMatrix(projectionMatrix);
 
     device.queue.writeBuffer(
@@ -183,6 +183,16 @@ export default class VoxelObject {
       (<Float32Array>this.position).buffer,
       (<Float32Array>this.position).byteOffset,
       (<Float32Array>this.position).byteLength
+    );
+
+    const timeBuffer = new Float32Array(1);
+    timeBuffer[0] = timestamp;
+    device.queue.writeBuffer(
+      this.uniformBuffer,
+      4 * 16 + 4 * 4 + 4 * 3,
+      timeBuffer.buffer,
+      timeBuffer.byteOffset,
+      timeBuffer.byteLength
     );
   }
 

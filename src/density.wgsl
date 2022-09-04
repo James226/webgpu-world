@@ -3,6 +3,7 @@ let freq = 0.001;
 let MATERIAL_AIR = 0u;
 let MATERIAL_ROCK = 1u;
 let MATERIAL_WOOD = 2u;
+let MATERIAL_FIRE = 3u;
 
 struct Density {
   density: f32,
@@ -207,6 +208,8 @@ fn calculateDensity(worldPosition: vec3<f32>) -> Density {
   result = add(result, Sphere(worldPosition, vec3<f32>(5000.0, 100.0, 100.0), 5000.0), MATERIAL_ROCK);
   result = add(result, Sphere(worldPosition, vec3<f32>(10000.0, 100.0, 100.0), 5000.0), MATERIAL_ROCK);
   result = add(result, Sphere(worldPosition, vec3<f32>(20000.0, 100.0, 100.0), 5000.0), MATERIAL_ROCK);
+
+  result = add(result, Sphere(worldPosition, vec3<f32>(100.0, 100.0, 300000.0), 200000.0), MATERIAL_FIRE);
 
   result = subtract(result, -Sphere(worldPosition, vec3<f32>(), 500.0));
 

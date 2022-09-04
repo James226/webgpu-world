@@ -6,6 +6,7 @@ import Physics from './physics';
 import {mat4, vec3} from "gl-matrix";
 import Mouse from "./mouse";
 import {QueueItem} from "./queueItem";
+import Raycast from "./raycast";
 
 declare global {
   interface Window { generate: any; }
@@ -19,12 +20,12 @@ class Game {
   private physics: Physics;
   private controller: Controller;
   private collection: VoxelCollection;
+  private raycast: Raycast
   private generating: boolean;
   private stride: number;
 
 
   async init(device: GPUDevice) {
-    const worldSize = 10;
     this.loaded = false;
 
     this.keyboard = new Keyboard();
@@ -41,6 +42,9 @@ class Game {
 
     this.collection = new VoxelCollection();
     await this.collection.init(device);
+
+    this.raycast = new Raycast();
+    await this.raycast.init(device);
 
     if (module.hot) {
       module.hot.accept(['./voxel-collection.ts'], async (a) => {
@@ -119,11 +123,11 @@ class Game {
     await this.physics.update(device, (q: QueueItem) => queue(q));
 
     this.controller.position = this.physics.position as vec3;
-    this.controller.update(device, projectionMatrix, timestamp);
+    this.controller.update(device, projectionMatrix, timestamp, queue, this.raycast);
 
     const viewMatrix = this.controller.viewMatrix;
-    
-    this.collection.update(device, viewMatrix);
+
+    this.collection.update(device, viewMatrix, timestamp);
     this.keyboard.update();
     this.mouse.update();
   }

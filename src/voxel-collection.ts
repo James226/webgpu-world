@@ -144,9 +144,9 @@ export default class VoxelCollection {
     }
   }
 
-  update(device, projectionMatrix) {
+  update(device, projectionMatrix, timestamp: number) {
     for (const value of this.objects.values()) {
-      value.update(device, projectionMatrix)
+      value.update(device, projectionMatrix, timestamp)
     }
   }
 

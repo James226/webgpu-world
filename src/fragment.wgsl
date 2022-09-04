@@ -1,7 +1,8 @@
 struct Uniforms {
   modelViewProjectionMatrix : mat4x4<f32>,
   stride: i32,
-  position: vec3<f32>
+  position: vec3<f32>,
+  time: f32,
 };
 @binding(0) @group(0) var<uniform> uniforms : Uniforms;
 @binding(1) @group(0) var<storage, read> corners : array<u32, 32768>;
@@ -93,10 +94,10 @@ fn cellular(co: vec2<f32>) -> vec3<f32> {
             let neighbor = vec2<f32>(f32(x),f32(y));
 
             // Random position from current + neighbor place in the grid
-            let point = random2(i_st + neighbor);
+            let p = random2(i_st + neighbor);
 
 			// Vector between the pixel and the point
-            let diff = neighbor + point - f_st;
+            let diff = neighbor + p - f_st;
 
             // Distance to the point
             let dist = length(diff);
@@ -128,6 +129,19 @@ fn samp(co: vec2<f32>, material: u32) -> vec3<f32> {
     return mix(vec3<f32>(0.19, 0.13, 0.06), vec3<f32>(0.52, 0.32, 0.19), v);
   }
 
+  if (material == MATERIAL_FIRE) {
+    let low = vec3<f32>(234.0/255.0, 91.0/255.0, 13.0/255.0);
+    let high = vec3<f32>(228.0/255.0, 2.0/255.0, 47.0/255.0);
+
+    let offset = co + vec2(sin(uniforms.time / 1000.0) * 500.0, cos(uniforms.time / 1000.0) * 500.0);
+    let offset2 = co + vec2(cos(uniforms.time / 1000.0) * 500.0, sin(-uniforms.time / 1000.0) * 500.0);
+
+    let samp = mix(low, high, perlinNoise2(offset / 500.0));
+    let samp2 = mix(low, high, perlinNoise2(offset2 / 500.0));
+
+    return mix(samp, samp2, 0.5);
+  }
+
   return vec3<f32>(1.0, 0.0, 0.0);
 }
 
@@ -150,7 +164,7 @@ fn findMaterial(pos: vec3<f32>, normal: vec3<f32>) -> u32 {
 	}
 }
 
-@stage(fragment)
+@fragment
 fn main(@location(0) vPos: vec4<f32>,
         @location(1) vNormal: vec3<f32>,
         @location(2) color: vec3<f32>) -> @location(0) vec4<f32> {
@@ -163,6 +177,10 @@ fn main(@location(0) vPos: vec4<f32>,
   let zaxis = samp(vPos.xy * normalRepeat, material);
 	var tex = xaxis * blending.x + yaxis * blending.y + zaxis * blending.z;
 
+  let t = uniforms.time;
+  if (material == MATERIAL_FIRE) {
+    return vec4(tex, 1.0);
+  }
   //let cell = vec3<u32>(vPos.xyz - uniforms.position / f32(uniforms.stride));
   //let foo = corners[cell.x * 32 * 32 + cell.y * 32 + cell.z];
   return vec4<f32>(tex * color, 1.0);

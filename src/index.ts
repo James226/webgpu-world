@@ -14,7 +14,7 @@ const configureRenderer = () => {
   canvas.height = window.innerHeight;
 
   const aspect = Math.abs(canvas.width / canvas.height);
-  mat4.perspective(projectionMatrix, (2 * Math.PI) / 5, aspect, 1, 100000);
+  mat4.perspective(projectionMatrix, (2 * Math.PI) / 5, aspect, 1, 10000000);
 
   renderer.configure(canvas.width, canvas.height);
 }
