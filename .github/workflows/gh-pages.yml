@@ -1,0 +1,37 @@
+name: GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Replace origin trial
+        run: sed -i 's/<meta http\-equiv="origin-trial" content=".*"\/>/<meta http-equiv="origin-trial" content="AsfRwrZuz7H8wrPb645Kg8NsTpsyKmP\/wOqG37G8QJgfqyuSQAlqQTm1fBIpKHW6QujFI89oPmh8UAaoqtut7QkAAABSeyJvcmlnaW4iOiJodHRwczovL2phbWVzMjI2LmdpdGh1Yi5pbzo0NDMiLCJmZWF0dXJlIjoiV2ViR1BVIiwiZXhwaXJ5IjoxNjc1MjA5NTk5fQ=="\/>/' dist/index.html
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        if: ${{ github.ref == 'refs/heads/main' }}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
