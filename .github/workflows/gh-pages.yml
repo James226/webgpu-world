@@ -27,7 +27,7 @@ jobs:
       - run: npm run build
 
       - name: Replace origin trial
-        run: sed -i 's/<meta http\-equiv="origin-trial" content=".*"\/>/<meta http-equiv="origin-trial" content="AsfRwrZuz7H8wrPb645Kg8NsTpsyKmP\/wOqG37G8QJgfqyuSQAlqQTm1fBIpKHW6QujFI89oPmh8UAaoqtut7QkAAABSeyJvcmlnaW4iOiJodHRwczovL2phbWVzMjI2LmdpdGh1Yi5pbzo0NDMiLCJmZWF0dXJlIjoiV2ViR1BVIiwiZXhwaXJ5IjoxNjc1MjA5NTk5fQ=="\/>/' dist/index.html
+        run: sed -i 's/<meta http\-equiv="origin-trial" content=".*"\/>/<meta http-equiv="origin-trial" content="As\/fecCqrex3nhjiUhPCjCbhUPHaz079sKqXdA0fyUUhiyOJCnhLl7fN48CpSNchsOT+fu8tpnN7LMG\/8l2B5g0AAABXeyJvcmlnaW4iOiJodHRwczovL3dlYmdwdS5qYW1lcy1wYXJrZXIuZGV2OjQ0MyIsImZlYXR1cmUiOiJXZWJHUFUiLCJleHBpcnkiOjE2NzUyMDk1OTl9"\/>/' dist/index.html
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
