@@ -11,7 +11,7 @@ struct Intersection {
   found: u32,
   normal: vec3<f32>
 }
-@binding(1) @group(0) var <storage, write> intersection: Intersection;
+@binding(1) @group(0) var <storage, read_write> intersection: Intersection;
 
 
 @compute @workgroup_size(1)
