@@ -5,6 +5,7 @@ import Density from '!!raw-loader!./density.wgsl';
 class Intersection {
     position: vec3;
     normal: vec3;
+    distance: number;
 }
 
 export default class Raycast {
@@ -105,6 +106,7 @@ export default class Raycast {
                         const intersection = new Intersection();
                         intersection.position = vec3.fromValues(result[0], result[1], result[2]);
                         intersection.normal = vec3.fromValues(result[4], result[5], result[6]);
+                        intersection.distance = result[7];
                         this.intersectionsReadBuffer.unmap();
                         resolve(intersection);
                     });

@@ -9,7 +9,8 @@ struct Uniforms {
 struct Intersection {
   position: vec3<f32>,
   found: u32,
-  normal: vec3<f32>
+  normal: vec3<f32>,
+  distance: f32
 }
 @binding(1) @group(0) var <storage, read_write> intersection: Intersection;
 
@@ -34,6 +35,7 @@ fn main() {
       intersection.found = 1;
       intersection.position = position;
       intersection.normal = vec3<f32>(3.0, 5.0, 1.0);
+      intersection.distance = length(uniforms.position - position);
       return;
     }
 

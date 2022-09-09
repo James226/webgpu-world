@@ -1,5 +1,5 @@
 import { vec3, vec4 } from 'gl-matrix';
-import ComputeVoxels from '!!raw-loader!./compute-voxels.wgsl';
+import Physics from '!!raw-loader!./physics.wgsl';
 import Density from '!!raw-loader!./density.wgsl';
 
 import Random from 'seedrandom';
@@ -16,7 +16,7 @@ export default class Voxel {
   private running: boolean;
 
   async init(device: GPUDevice) {
-    const computeVoxels = ComputeVoxels.replace("#import density", Density);
+    const physics = Physics.replace("#import density", Density);
 
     this.velocity = vec3.fromValues(0,0,0);
     this.position = vec4.fromValues(2000000, 0, 0, 0);
@@ -26,7 +26,7 @@ export default class Voxel {
       layout: 'auto',
       compute: {
         module: device.createShaderModule({
-          code: computeVoxels,
+          code: physics,
         }),
         entryPoint: 'computePhysics',
       },

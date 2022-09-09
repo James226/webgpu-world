@@ -114,7 +114,7 @@ export default class Controller {
 
     if (this.keyboard.keypress(' ')) {
       raycast.cast(device, queue, this.position, vec3.scale(vec3.create(), this.forward, -1))
-        .then(r => r !== null ? console.log(r.position) : console.log('No intersection found'));
+        .then(r => r !== null ? console.log(r.position, r.distance) : console.log('No intersection found'));
     }
 
     quat.rotateX(this.rotation, this.rotation, glMatrix.toRadian(-this.mouse.position.y * 0.08));
