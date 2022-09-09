@@ -21,11 +21,11 @@ fn getTriPlanarBlend(_wNorm: vec3<f32>) -> vec3<f32> {
 	return blending;
 }
 
-let normalRepeat = 0.2;
+const normalRepeat = 0.2;
 
-let lower = 20.0;
-let upper = 49.0;
-let diff = 29.0;
+const lower = 20.0;
+const upper = 49.0;
+const diff = 29.0;
 
 fn getFade(y: f32) -> f32 {
   if (y < lower) {
@@ -164,7 +164,7 @@ fn findMaterial(pos: vec3<f32>, normal: vec3<f32>) -> u32 {
 	}
 }
 
-let lightIterations = 10.0;
+const lightIterations = 10.0;
 
 fn hasLight(p: vec3<f32>) -> f32 {
   let direction = normalize(-p);

@@ -10,7 +10,7 @@ struct CornerIndex {
 @binding(3) @group(0) var<storage, read_write> cornerIndex: CornerIndex;
 
 
-@stage(compute) @workgroup_size(1)
+@compute @workgroup_size(1)
 fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 	var position: u32 = 0u;
 

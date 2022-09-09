@@ -1,4 +1,4 @@
-let OctreeSize = 32u;
+const OctreeSize = 32u;
 
 struct CornerMaterials {
   cornerMaterials : array<u32>,
@@ -10,7 +10,7 @@ struct VoxelMaterials {
 };
 @binding(2) @group(0) var<storage, read_write> voxelMaterials: VoxelMaterials;
 
-let CHILD_MIN_OFFSETS = array<vec3<u32>, 8>
+const CHILD_MIN_OFFSETS = array<vec3<u32>, 8>
 (
   vec3<u32>(0u, 0u, 0u),
   vec3<u32>(0u, 0u, 1u),

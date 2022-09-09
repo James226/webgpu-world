@@ -1,9 +1,9 @@
-let freq = 0.001;
+const freq = 0.001;
 
-let MATERIAL_AIR = 0u;
-let MATERIAL_ROCK = 1u;
-let MATERIAL_WOOD = 2u;
-let MATERIAL_FIRE = 3u;
+const MATERIAL_AIR = 0u;
+const MATERIAL_ROCK = 1u;
+const MATERIAL_WOOD = 2u;
+const MATERIAL_FIRE = 3u;
 
 struct Density {
   density: f32,

@@ -51,7 +51,7 @@ struct UniformBufferObject {
 @binding(5) @group(0)
 var<uniform> uniforms : UniformBufferObject;
 
-let CHILD_MIN_OFFSETS: array<vec3<u32>, 8> = array<vec3<u32>, 8>
+const CHILD_MIN_OFFSETS: array<vec3<u32>, 8> = array<vec3<u32>, 8>
 (
   vec3<u32>(0u, 0u, 0u),
   vec3<u32>(0u, 0u, 1u),
@@ -63,7 +63,7 @@ let CHILD_MIN_OFFSETS: array<vec3<u32>, 8> = array<vec3<u32>, 8>
   vec3<u32>(1u, 1u, 1u)
 );
 
-let edgevmap: array<vec2<i32>, 12> = array<vec2<i32>, 12>
+const edgevmap: array<vec2<i32>, 12> = array<vec2<i32>, 12>
 (
 	vec2<i32>(0,4), vec2<i32>(1,5), vec2<i32>(2,6), vec2<i32>(3,7),
 	vec2<i32>(0,2), vec2<i32>(1,3), vec2<i32>(4,6), vec2<i32>(5,7),
@@ -79,7 +79,7 @@ fn Vec3Dot(a: vec3<f32>, b: vec3<f32>) -> f32
 	return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
 }
 
-let Grad3: array<vec3<f32>, 12> = array<vec3<f32>, 12>(
+const Grad3: array<vec3<f32>, 12> = array<vec3<f32>, 12>(
 	vec3<f32>(1.0,1.0,0.0), vec3<f32>(-1.0,1.0,0.0), vec3<f32>(1.0,-1.0,0.0), vec3<f32>(-1.0,-1.0,0.0),
 	vec3<f32>(1.0,0.0,1.0), vec3<f32>(-1.0,0.0,1.0), vec3<f32>(1.0,0.0,-1.0), vec3<f32>(-1.0,0.0,-1.0),
 	vec3<f32>(0.0,1.0,1.0), vec3<f32>(0.0,-1.0,1.0), vec3<f32>(0.0,1.0,-1.0), vec3<f32>(0.0,-1.0,-1.0)
@@ -201,8 +201,8 @@ fn CLerp(a: f32, b: f32, t: f32) -> f32
 
 // SVD
 
-let SVD_NUM_SWEEPS: i32 = 4;
-let PSUEDO_INVERSE_THRESHOLD: f32 = 0.00000001;
+const SVD_NUM_SWEEPS: i32 = 4;
+const PSUEDO_INVERSE_THRESHOLD: f32 = 0.00000001;
 
 fn svd_mul_matrix_vec(m: mat3x3<f32>, b: vec4<f32>) -> vec4<f32>
 {
