@@ -86,11 +86,11 @@ export default class Controller {
 
     if (vec3.length(this.velocity) > 0) {
       if (this.noise.state === "stopped") {
-        this.noise.start();
+        //this.noise.start();
       }
     } else {
       if (this.noise != null && this.noise.state === "started") {
-        this.noise.stop();
+        //this.noise.stop();
       }
     }
 

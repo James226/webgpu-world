@@ -60,6 +60,8 @@ const ctx: Worker = self as any;
     console.log(`Init world at ${info.x}:${info.y}:${info.z} for stride ${stride}`)
 
     do {
+
+      //let timer = performance.now();
       const r = worldGenerator.next(info);
       const result = r[0];
       info = r[1];
@@ -70,6 +72,10 @@ const ctx: Worker = self as any;
       const { vertices, normals, indices, corners } = await voxel.generate(device, queue, vec3.fromValues(x * chunkSize -halfChunk, y * chunkSize -halfChunk, z * chunkSize -halfChunk), result.stride);
       // if (vertices.length > 0) {
       //   console.log(`Generating ${x}:${y}:${z} (${x * chunkSize -halfChunk}:${y * chunkSize -halfChunk}:${z * chunkSize -halfChunk}) (${result.stride} / ${halfChunk} / ${info.previousOffset})`)
+      // }
+
+      // if (vertices.length > 0) {
+      //   console.log(`Block generated with ${vertices.length} in ${performance.now() - timer}`);
       // }
       ctx.postMessage(({ type: 'update', i: `${x}:${y}:${z}`, ix: x, iy: y, iz: z, x: 0, y: 0, z: 0, vertices: vertices.buffer, normals: normals.buffer, indices: indices.buffer, corners: corners.buffer, stride: result.stride }), [vertices.buffer, normals.buffer, indices.buffer, corners.buffer])
 

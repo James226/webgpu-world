@@ -94,6 +94,9 @@ export default class Voxel {
   private computeVoxelsPipeline: GPUComputePipeline;
   private computeVoxelsBindGroup: GPUBindGroup;
   private voxelReadBuffer: GPUBuffer;
+  private augmentationBuffer: GPUBuffer;
+  private densityBindGroup: GPUBindGroup;
+  private mainDensityBindGroup: GPUBindGroup;
 
   async init(device: GPUDevice) {
     const computeVoxelsCode = ComputeVoxels.replace("#import density", Density);
@@ -326,6 +329,42 @@ export default class Voxel {
       usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
 
+    const augmentationSize = 4 * 4 + 4 * 4;
+    this.augmentationBuffer = device.createBuffer({
+      size: augmentationSize,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+      mappedAtCreation: true
+    });
+
+    const augmentations = new Float32Array(this.augmentationBuffer.getMappedRange());
+    augmentations[0] = 2000000.0;
+
+    this.augmentationBuffer.unmap();
+
+    this.densityBindGroup = device.createBindGroup({
+      layout: this.computePipeline.getBindGroupLayout(1),
+      entries: [
+        {
+          binding: 0,
+          resource: {
+            buffer: this.augmentationBuffer,
+          },
+        },
+      ],
+    });
+
+    this.mainDensityBindGroup = device.createBindGroup({
+      layout: this.computeVoxelsPipeline.getBindGroupLayout(1),
+      entries: [
+        {
+          binding: 0,
+          resource: {
+            buffer: this.augmentationBuffer,
+          },
+        },
+      ],
+    });
+
     console.log('Done', performance.now() - start);
   }
 
@@ -371,6 +410,7 @@ export default class Voxel {
       const computePassEncoder = computeEncoder.beginComputePass();
       computePassEncoder.setPipeline(this.computePipeline);
       computePassEncoder.setBindGroup(0, this.computeBindGroup);
+      computePassEncoder.setBindGroup(1, this.densityBindGroup);
       computePassEncoder.dispatchWorkgroups(octreeSize + 1, octreeSize + 1, octreeSize + 1);
       computePassEncoder.end();
 
@@ -435,6 +475,7 @@ export default class Voxel {
             const computePassEncoder = computeEncoder.beginComputePass();
             computePassEncoder.setPipeline(this.computeVoxelsPipeline);
             computePassEncoder.setBindGroup(0, this.computeVoxelsBindGroup);
+            computePassEncoder.setBindGroup(1, this.mainDensityBindGroup);
             computePassEncoder.dispatchWorkgroups(dispatchCount);
             computePassEncoder.end();
 

@@ -14,6 +14,8 @@ export default class Voxel {
   private computeBindGroup: GPUBindGroup;
   private actorsReadBuffer: GPUBuffer;
   private running: boolean;
+  private augmentationBuffer: GPUBuffer;
+  private densityBindGroup: GPUBindGroup;
 
   async init(device: GPUDevice) {
     const physics = Physics.replace("#import density", Density);
@@ -85,6 +87,25 @@ export default class Voxel {
       usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ
     });
 
+    const augmentationSize = 4 * 4 + 4 * 4;
+    this.augmentationBuffer = device.createBuffer({
+      size: augmentationSize,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+    });
+
+    this.densityBindGroup = device.createBindGroup({
+      layout: this.computePipeline.getBindGroupLayout(1),
+      entries: [
+        {
+          binding: 0,
+          resource: {
+            buffer: this.augmentationBuffer,
+          },
+        },
+      ],
+    });
+
+
     console.log('Physics engine loaded', performance.now() - start);
   }
 
@@ -101,6 +122,7 @@ export default class Voxel {
       const computePassEncoder = computeEncoder.beginComputePass();
       computePassEncoder.setPipeline(this.computePipeline);
       computePassEncoder.setBindGroup(0, this.computeBindGroup);
+      computePassEncoder.setBindGroup(1, this.densityBindGroup);
       computePassEncoder.dispatchWorkgroups(1);
       computePassEncoder.end();
 

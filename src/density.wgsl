@@ -10,6 +10,14 @@ struct Density {
   material: u32
 }
 
+struct Augmentation {
+  position: vec3<f32>,
+  size: f32,
+  attributes: u32
+}
+
+@binding(0) @group(1) var<storage, read> augmentations: array<Augmentation>;
+
 fn subtract(base: Density, sub: f32) -> Density {
   return Density(max(base.density, sub), base.material);
 }
@@ -188,21 +196,20 @@ fn calculateDensity(worldPosition: vec3<f32>) -> Density {
 
 	let rockyBlend: f32 = 1.0;
 
-	let mountainBlend: f32 = clamp(abs(FractalNoise2(0.5343, 2.2324, 0.68324, world)) * 4.0, 0.0, 1.0);
-	//let mountainBlend: f32 = 0.0;
-
-	let mountain: f32 = CalculateNoiseValue2(world, 0.07);
-	//let mountain: f32 = 0.0;
-
-	var blob: f32 = CalculateNoiseValue2(world, flatlandNoiseScale + ((rockyNoiseScale - flatlandNoiseScale) * rockyBlend));
-	//var blob: f32 = 0.0;
-	blob = CLerp2(blob, (worldDist) * (flatlandYPercent + ((rockyYPercent - flatlandYPercent) * rockyBlend)),
-				flatlandLerpAmount + ((rockyLerpAmount - flatlandLerpAmount) * rockyBlend));
-				//+ CLerp2(mountain, blob, minMountainMixLerpAmount + ((maxMountainMixLerpAmount - minMountainMixLerpAmount) * mountainBlend));
+//	let mountainBlend: f32 = clamp(abs(FractalNoise2(0.5343, 2.2324, 0.68324, world)) * 4.0, 0.0, 1.0);
+//	//let mountainBlend: f32 = 0.0;
+//
+//	let mountain: f32 = CalculateNoiseValue2(world, 0.07);
+//	//let mountain: f32 = 0.0;
+//
+//	var blob: f32 = CalculateNoiseValue2(world, flatlandNoiseScale + ((rockyNoiseScale - flatlandNoiseScale) * rockyBlend));
+//	blob = CLerp2(blob, (worldDist) * (flatlandYPercent + ((rockyYPercent - flatlandYPercent) * rockyBlend)),
+//				flatlandLerpAmount + ((rockyLerpAmount - flatlandLerpAmount) * rockyBlend));
+//				//+ CLerp2(mountain, blob, minMountainMixLerpAmount + ((maxMountainMixLerpAmount - minMountainMixLerpAmount) * mountainBlend));
 
   var result = Density(1.0, MATERIAL_AIR);
 
-	result = add(result, blob, MATERIAL_ROCK);
+	//result = add(result, blob, MATERIAL_ROCK);
 
   result = add(result, Box(worldPosition, vec3<f32>(2000000.0, 150.0, 5000.0), vec3<f32>(5000.0, 1000.0, 5000.0)), MATERIAL_WOOD);
   result = add(result, Sphere(worldPosition, vec3<f32>(5000.0, 100.0, 100.0), 5000.0), MATERIAL_ROCK);
@@ -215,6 +222,25 @@ fn calculateDensity(worldPosition: vec3<f32>) -> Density {
   result = subtract(result, -Box(worldPosition, vec3<f32>(2000000.0, 0.0, 0.0), vec3<f32>(6000.0, 500.0, 500.0)));
   result = subtract(result, -Box(worldPosition, vec3<f32>(2000000.0, 0.0, 0.0), vec3<f32>(500.0, 500.0, 5000.0)));
 
+  //result = add(result, Sphere(worldPosition, vec3<f32>(2000000.0, 0.0, 0.0), 1000.0), MATERIAL_FIRE);
+
+
+  let count = arrayLength(&augmentations);
+
+  var i: u32 = 0u;
+  loop {
+    if (i > count) { break; }
+
+    let augmentation = augmentations[i];
+    result = add(result, Sphere(worldPosition, vec3<f32>(augmentation.position.x, augmentation.position.y, augmentation.position.z), 1000.0), MATERIAL_FIRE);
+
+
+    continuing {
+      i = i + 1u;
+    }
+  }
+
+  let augmentation = augmentations[0];
   return result;
 }
 

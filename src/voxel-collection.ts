@@ -41,8 +41,20 @@ export default class VoxelCollection {
     ],
   });
 
+  const densityLayout = device.createBindGroupLayout({
+    entries: [
+      {
+        binding: 0,
+        visibility: GPUShaderStage.FRAGMENT,
+        buffer: {
+          type: 'read-only-storage',
+        },
+      },
+    ],
+  });
+
     const pipelineLayout = device.createPipelineLayout({
-      bindGroupLayouts: [uniformLayout],
+      bindGroupLayouts: [uniformLayout, densityLayout],
     });
 
     const buildPipeline = () => {
