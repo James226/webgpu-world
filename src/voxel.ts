@@ -75,6 +75,8 @@ const computeVoxels = (position, stride, voxelCount, computedVoxelsData) => {
 
 
 export default class Voxel {
+  public running: boolean;
+
   private computePipeline: GPUComputePipeline;
   private computeCornersPipeline: GPUComputePipeline;
   private uniformBuffer: GPUBuffer;
@@ -151,8 +153,6 @@ export default class Voxel {
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
       mappedAtCreation: false,
     });
-
-
 
     this.voxelMaterialsBufferRead = device.createBuffer({
       size: Uint32Array.BYTES_PER_ELEMENT * 32 * 32 * 32,
@@ -458,53 +458,50 @@ export default class Voxel {
           const corners = new Uint32Array(this.cornerMaterialsRead.getMappedRange()).slice();
           this.cornerMaterialsRead.unmap();
 
-          this.gpuReadBuffer.mapAsync(GPUMapMode.READ).then(() => {
+          await this.gpuReadBuffer.mapAsync(GPUMapMode.READ);
 
-            const arrayBuffer = this.gpuReadBuffer.getMappedRange();
-            const voxelCount = new Uint32Array(arrayBuffer)[0];
-            //console.log('Voxel count', voxelCount);
-            this.gpuReadBuffer.unmap();
+          const arrayBuffer = this.gpuReadBuffer.getMappedRange();
+          const voxelCount = new Uint32Array(arrayBuffer)[0];
+          this.gpuReadBuffer.unmap();
 
-            if (voxelCount === 0) {
-              resolve({vertices: new Float32Array(), normals: new Float32Array(), indices: new Uint16Array(), corners: new Uint32Array()});
-              return;
+          if (voxelCount === 0) {
+            resolve({vertices: new Float32Array(), normals: new Float32Array(), indices: new Uint16Array(), corners: new Uint32Array()});
+            return;
+          }
+
+          const dispatchCount = Math.ceil(voxelCount / 128);
+          const computeEncoder = device.createCommandEncoder();
+          const computePassEncoder = computeEncoder.beginComputePass();
+          computePassEncoder.setPipeline(this.computeVoxelsPipeline);
+          computePassEncoder.setBindGroup(0, this.computeVoxelsBindGroup);
+          computePassEncoder.setBindGroup(1, this.mainDensityBindGroup);
+          computePassEncoder.dispatchWorkgroups(dispatchCount);
+          computePassEncoder.end();
+
+          const copyEncoder = device.createCommandEncoder();
+          copyEncoder.copyBufferToBuffer(
+              this.voxelsBuffer,
+              0,
+              this.voxelReadBuffer,
+              0,
+              Float32Array.BYTES_PER_ELEMENT * voxelCount * 12
+          );
+
+
+          queue({
+            items: [computeEncoder.finish(), copyEncoder.finish()],
+            callback: async () => {
+
+              await this.voxelReadBuffer.mapAsync(GPUMapMode.READ);
+
+              const arrayBuffer = this.voxelReadBuffer.getMappedRange();
+              const computedVoxelsData = new Float32Array(arrayBuffer);
+              const result = computeVoxels(position, stride, voxelCount, computedVoxelsData);
+
+              this.voxelReadBuffer.unmap();
+
+              resolve({...result, corners});
             }
-
-            const dispatchCount = Math.ceil(voxelCount / 128);
-            const computeEncoder = device.createCommandEncoder();
-            const computePassEncoder = computeEncoder.beginComputePass();
-            computePassEncoder.setPipeline(this.computeVoxelsPipeline);
-            computePassEncoder.setBindGroup(0, this.computeVoxelsBindGroup);
-            computePassEncoder.setBindGroup(1, this.mainDensityBindGroup);
-            computePassEncoder.dispatchWorkgroups(dispatchCount);
-            computePassEncoder.end();
-
-            const copyEncoder = device.createCommandEncoder();
-            copyEncoder.copyBufferToBuffer(
-                this.voxelsBuffer,
-                0,
-                this.voxelReadBuffer,
-                0,
-                Float32Array.BYTES_PER_ELEMENT * voxelCount * 12
-            );
-
-
-            queue({
-              items: [computeEncoder.finish(), copyEncoder.finish()],
-              callback: () => {
-
-                this.voxelReadBuffer.mapAsync(GPUMapMode.READ).then(() => {
-
-                  const arrayBuffer = this.voxelReadBuffer.getMappedRange();
-                  const computedVoxelsData = new Float32Array(arrayBuffer);
-                  const result = computeVoxels(position, stride, voxelCount, computedVoxelsData);
-
-                  this.voxelReadBuffer.unmap();
-
-                  resolve({...result, corners});
-                });
-              }
-            });
           });
         }
       });

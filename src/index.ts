@@ -31,9 +31,25 @@ renderer.init(canvas).then(async () => {
 
   configureRenderer();
 
+  const times = [];
+  let fps;
+  let lastUpdate = performance.now();
+
   const doFrame = (timestamp: number) => {
     game.update(renderer.device, projectionMatrix, timestamp).then(() => {
       renderer.render(e => game.draw(e));
+      const now = performance.now();
+      while (times.length > 0 && times[0] <= now - 1000) {
+        times.shift();
+      }
+      times.push(now);
+      fps = times.length;
+
+      if (now - lastUpdate > 1000) {
+        document.getElementById('tool').innerText = fps;
+        lastUpdate = now;
+      }
+
       requestAnimationFrame(doFrame);
     });
   };
