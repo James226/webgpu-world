@@ -8,11 +8,15 @@ export interface WorldGeneratorInfo {
   previousOffset: number;
 }
 
-interface WorldPosition {
+export class WorldPosition {
   x: number;
   y: number;
   z: number;
   stride: number;
+
+  static equal(a: WorldPosition, b: WorldPosition): boolean {
+    return a.stride == b.stride && a.x == b.x && a.y == b.y && a.z == b.z;
+  }
 }
 
 interface Point {

@@ -1,6 +1,8 @@
+import Stats from 'stats.js'
 import Renderer from "./renderer";
 import Game from "./game";
 import {mat4} from "gl-matrix";
+import Web3 from "web3";
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement;
 
@@ -19,7 +21,6 @@ const configureRenderer = () => {
   renderer.configure(canvas.width, canvas.height);
 }
 
-
 renderer.init(canvas).then(async () => {
 
   window.addEventListener('resize', configureRenderer, false);
@@ -35,7 +36,13 @@ renderer.init(canvas).then(async () => {
   let fps;
   let lastUpdate = performance.now();
 
+  const stats = new Stats();
+  stats.showPanel(0);
+  document.body.appendChild(stats.dom);
+
+
   const doFrame = (timestamp: number) => {
+    stats.begin();
     game.update(renderer.device, projectionMatrix, timestamp).then(() => {
       renderer.render(e => game.draw(e));
       const now = performance.now();
@@ -50,6 +57,7 @@ renderer.init(canvas).then(async () => {
         lastUpdate = now;
       }
 
+      stats.end();
       requestAnimationFrame(doFrame);
     });
   };

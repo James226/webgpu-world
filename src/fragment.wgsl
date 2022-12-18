@@ -193,7 +193,7 @@ fn hasLight(p: vec3<f32>) -> f32 {
 fn main(@location(0) vPos: vec4<f32>,
         @location(1) vNormal: vec3<f32>,
         @location(2) color: vec3<f32>) -> @location(0) vec4<f32> {
-  let fade = getFade(vPos.y);
+  //let fade = getFade(vPos.y);
   let blending = getTriPlanarBlend(vNormal);
   let material = findMaterial(vPos.xyz, normalize(vNormal.xyz));
 

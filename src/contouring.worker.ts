@@ -1,72 +1,10 @@
 import {vec3} from 'gl-matrix';
 import Voxel from './voxel';
 import {QueueItem} from "./queueItem";
-import WorldGenerator  from "./world-generator";
+import WorldGenerator, {WorldGeneratorInfo, WorldPosition} from "./world-generator";
+import {CountDownLatch} from "./countDownLatch";
 
 const ctx: Worker = self as any;
-
-class CountDownLatch {
-
-  private readonly promise: Promise<void>;
-
-  private countDownFunction: () => number;
-  private count: number;
-
-  /**
-   * Creates a new instance with a given count
-   *
-   * @param count The initial count
-   */
-  constructor(count: number) {
-    this.count = Math.max(count, 0);
-    this.promise = new Promise<void>(resolve => {
-      this.countDownFunction = () => {
-        if (this.count > 0) {
-          this.count = this.count - 1;
-          if (this.count <= 0) {
-            resolve();
-          }
-        }
-        return this.count;
-      };
-
-      //Resolve promise if initial value is less or equal 0
-      //Maybe count was calculated from data or something else
-      //so this case makes sense under some circumstances
-      if (count <= 0) {
-        resolve();
-      }
-    });
-  }
-
-  /**
-   * Decrement the count by one
-   */
-  public countDown(): number {
-    return this.countDownFunction();
-  }
-
-  /**
-   * Get's the current count value of the latch
-   */
-  public getCount(): number {
-    return this.count;
-  }
-
-  /**
-   * Await until the count reaches zero (0)
-   */
-  public async awaitZero() {
-    await this.promise;
-  }
-
-  /**
-   * Get's the promise that will be resolve after count reached zero
-   */
-  public getPromise() {
-    return this.promise;
-  }
-}
 
 (async function() {
   const adapter = await navigator.gpu.requestAdapter();
@@ -93,11 +31,14 @@ class CountDownLatch {
     //device.queue.submit(item.items);
   };
 
+  let lastInfo: WorldGeneratorInfo = null;
+
 
   let generating = false;
+  const generatedPositions: WorldPosition[] = [];
+
   onmessage = async function(e) {
     if (generating) {
-      console.log('Still generating')
       return;
     }
 
@@ -116,24 +57,49 @@ class CountDownLatch {
 
     const stride = 32;
     const size = 128;
-    console.log(`World Size: ${size} (${size * 32})`);
     const chunkSize = 31;
     const worldSize =  Math.ceil(size / stride);
 
-    console.log(`Starting generation. Stride: ${stride} (${worldSize})`);
     const t0 = performance.now();
 
     const worldGenerator = new WorldGenerator(stride);
+
     let info = worldGenerator.init((position[0] / chunkSize), (position[1] / chunkSize), (position[2] / chunkSize));
+
+
+    if (lastInfo !== null && info.x === lastInfo.x && info.y === lastInfo.y && info.z === lastInfo.z) {
+      generating = false;
+      return;
+    }
 
     console.log(`Init world at ${info.x}:${info.y}:${info.z} for stride ${stride}`)
 
-    //const semaphore = new Semaphore(threadCount);
+    lastInfo = info;
+    //ctx.postMessage({ type: 'clear'});
+
+    const times = {
+      32: [],
+      64: [],
+      128: [],
+      256: [],
+      512: [],
+      1024: []
+    };
 
     do {
 
       for (let i = 0; i < threadCount; i++) {
-        //const release = await semaphore.acquire();
+
+
+        //let timer = performance.now();
+        const r = worldGenerator.next(info);
+        const result = r[0];
+        info = r[1];
+
+        const matchingChunk = generatedPositions.filter(p => WorldPosition.equal(p, result));
+        if (matchingChunk.length > 0) {
+          continue;
+        }
 
         let generator: Voxel = null;
         for (let j = 0; j < generators.length; j++) {
@@ -143,10 +109,6 @@ class CountDownLatch {
             break;
           }
         }
-        //let timer = performance.now();
-        const r = worldGenerator.next(info);
-        const result = r[0];
-        info = r[1];
 
         const {x, y, z} = result;
         const halfChunk = result.stride * chunkSize * 0.5;
@@ -169,11 +131,11 @@ class CountDownLatch {
               vertices: vertices.buffer,
               normals: normals.buffer,
               indices: indices.buffer,
-              corners: corners.buffer,
               stride: result.stride
-            }), [vertices.buffer, normals.buffer, indices.buffer, corners.buffer])
+            }), [vertices.buffer, normals.buffer, indices.buffer]);
+            generatedPositions.push(result);
             generator.running = false;
-            //release();
+            //times[info.stride].push(performance.now() - timer);
           });
         // if (vertices.length > 0) {
         //   console.log(`Generating ${x}:${y}:${z} (${x * chunkSize -halfChunk}:${y * chunkSize -halfChunk}:${z * chunkSize -halfChunk}) (${result.stride} / ${halfChunk} / ${info.previousOffset})`)
@@ -184,7 +146,6 @@ class CountDownLatch {
         // }
         //ctx.postMessage(({ type: 'update', i: `${x}:${y}:${z}`, ix: x, iy: y, iz: z, x: 0, y: 0, z: 0, vertices: vertices.buffer, normals: normals.buffer, indices: indices.buffer, corners: corners.buffer, stride: result.stride }), [vertices.buffer, normals.buffer, indices.buffer, corners.buffer])
         while (gpuQueue.length > 0) {
-
           const promise = device.queue.onSubmittedWorkDone();
           device.queue.submit(gpuQueue);
           await promise;
@@ -199,10 +160,12 @@ class CountDownLatch {
           }
           await countdown.awaitZero();
         }
-
       }
-    } while (info.stride <= 32768);
+    } while (info.stride <= 2 << 14);
 
+    for (let k in times) {
+      console.log(`${k}: ${times[k].reduce((partialSum, a) => partialSum + a, 0) / times[k].length}`);
+    }
     generating = false;
 
     console.log(`Generation complete in ${performance.now() - t0} milliseconds`);

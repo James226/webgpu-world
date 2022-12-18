@@ -7,6 +7,8 @@ import {mat4, vec3} from "gl-matrix";
 import Mouse from "./mouse";
 import {QueueItem} from "./queueItem";
 import Raycast from "./raycast";
+import Network from "./network";
+import {Player} from "./player";
 
 declare global {
   interface Window { generate: any; }
@@ -23,10 +25,21 @@ class Game {
   private raycast: Raycast
   private generating: boolean;
   private stride: number;
+  private lastUpdate: number;
+  private network: Network;
+  private player: Player;
 
 
   async init(device: GPUDevice) {
     this.loaded = false;
+    this.lastUpdate = 0;
+
+    this.network = await Network.init();
+
+    await this.network.sendData({type: 'move', position: {x: 0, y: 0, z: 0}});
+
+    this.player = new Player();
+    await this.player.init(device);
 
     this.keyboard = new Keyboard();
     this.keyboard.init();
@@ -81,6 +94,7 @@ class Game {
         const { type, i, vertices, normals, indices, corners, stride } = data;
         switch (type) {
           case 'clear':
+            this.collection.freeAll();
             break;
           case 'update':
             {
@@ -111,6 +125,14 @@ class Game {
       this.generate(device, null);
     }
 
+    // Disable regeneration of world
+    if (timestamp - this.lastUpdate > 10000) {
+      //this.voxelWorker.postMessage({stride: this.stride, position: this.controller.position});
+      this.network.sendData({type: 'position', position: {x: this.controller.position[0], y: this.controller.position[1], z: this.controller.position[2]}});
+
+      this.lastUpdate = timestamp;
+    }
+
     const queue = (item: QueueItem) => {
       device.queue.onSubmittedWorkDone().then(_ => {
         item.callback();
@@ -127,12 +149,15 @@ class Game {
 
     const viewMatrix = this.controller.viewMatrix;
 
+    this.player.update(device, projectionMatrix);
+
     this.collection.update(device, viewMatrix, timestamp);
     this.keyboard.update();
     this.mouse.update();
   }
 
   draw(passEncoder: GPURenderPassEncoder) {
+    this.player.draw(passEncoder);
     this.collection.draw(passEncoder);
   }
 }

@@ -79,7 +79,7 @@ export default class VoxelObject {
     });
 
     const augmentations = new Float32Array(this.augmentationBuffer.getMappedRange());
-    augmentations[0] = 2000000.0;
+    augmentations[0] = 2200000.0;
 
     this.augmentationBuffer.unmap();
 

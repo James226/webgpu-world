@@ -55,7 +55,7 @@ export default class Controller {
 
   update(device: GPUDevice, projectionMatrix: mat4, timestamp: number, queue, raycast: Raycast) {
 
-    const distance = this.keyboard.keydown('shift') ? 100 : 10;
+    const distance = this.keyboard.keydown('shift') ? 1000 : 10;
     vec3.zero(this.velocity);
     if (this.keyboard.keydown('w')) {
       vec3.sub(this.velocity, this.velocity, this.forward);
