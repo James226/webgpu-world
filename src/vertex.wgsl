@@ -39,7 +39,7 @@ fn main(@location(0) position : vec4<f32>,
   output.Position = uniforms.modelViewProjectionMatrix * position;
   output.normal = normal.xyz;
 
-  var result = vec3<f32>(0.2, 0.2, 0.2) + light.diffuse * lambert(normal.xyz, light.position);
+  var result = vec3<f32>(0.4, 0.4, 0.4) + light.diffuse * lambert(normal.xyz, light.position);
 
   output.fragPosition = position;
   output.color = result;

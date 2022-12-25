@@ -187,14 +187,11 @@ export default class Voxel {
     );
     this.permutationsBuffer.unmap();
 
-
-
     this.voxelsBuffer = device.createBuffer({
       size: Float32Array.BYTES_PER_ELEMENT * 12 * 32 * 32 * 32,
       usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
       mappedAtCreation: false,
     });
-
 
     this.actorsBuffer = device.createBuffer({
       size: Float32Array.BYTES_PER_ELEMENT * 8,

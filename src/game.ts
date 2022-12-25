@@ -7,6 +7,7 @@ import {mat4, vec3} from "gl-matrix";
 import Mouse from "./mouse";
 import {QueueItem} from "./queueItem";
 import Raycast from "./raycast";
+import Player from "./player";
 
 declare global {
   interface Window { generate: any; }
@@ -23,6 +24,7 @@ class Game {
   private raycast: Raycast
   private generating: boolean;
   private stride: number;
+  private player: Player;
 
 
   async init(device: GPUDevice) {
@@ -36,6 +38,10 @@ class Game {
 
     this.physics = new Physics();
     await this.physics.init(device);
+
+    this.player = new Player(vec3.fromValues(2000000.0, 100.0, 100.0));
+    this.player.init(device);
+
 
     this.controller = new Controller(this.keyboard, this.mouse);
     this.controller.init();
@@ -125,14 +131,18 @@ class Game {
     this.controller.position = this.physics.position as vec3;
     this.controller.update(device, projectionMatrix, timestamp, queue, this.raycast);
 
+
     const viewMatrix = this.controller.viewMatrix;
 
     this.collection.update(device, viewMatrix, timestamp);
+    this.player.update(device, viewMatrix, timestamp);
+
     this.keyboard.update();
     this.mouse.update();
   }
 
   draw(passEncoder: GPURenderPassEncoder) {
+    this.player.draw(passEncoder);
     this.collection.draw(passEncoder);
   }
 }
