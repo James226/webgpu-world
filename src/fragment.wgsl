@@ -168,7 +168,7 @@ const lightIterations = 10.0;
 
 fn hasLight(p: vec3<f32>) -> f32 {
   let direction = normalize(-p);
-  var i = 1.0;
+  var i = 0.0;
 
 
   loop {
@@ -176,7 +176,8 @@ fn hasLight(p: vec3<f32>) -> f32 {
     let density = getDensity(position);
 
     if (density < 0) {
-      return mix(0.02, 0.05, i / lightIterations);
+      return 0.5;
+      // return mix(0.2, 1.0, 1.0 - i / lightIterations);
     }
 
     if (i > lightIterations) {

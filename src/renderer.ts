@@ -34,7 +34,7 @@ export default class Renderer {
       colorAttachments: [
         {
           view: textureView,
-          clearValue: {r: 0.0, g: 0.0, b: 0.0, a: 1.0},
+          clearValue: {r: 75/255, g: 0/255, b: 130/255, a: 1.0},
           loadOp: 'clear' as const,
           storeOp: 'store' as const
         }

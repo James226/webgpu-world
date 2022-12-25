@@ -1,41 +1,25 @@
-import {
-  cubeVertexArray,
-  cubeVertexSize,
-  cubeUVOffset,
-  cubePositionOffset,
-  cubeVertexCount,
-} from './meshes/cube';
+import {mat4, vec3} from 'gl-matrix';
+import {cubePositionOffset, cubeUVOffset, cubeVertexArray, cubeVertexCount, cubeVertexSize} from './cube';
+import vertex from '!!raw-loader!./playerVertex.wgsl'
+import fragment from '!!raw-loader!./playerFragment.wgsl'
 
-import basicVertWGSL from '!!raw-loader!./player.vert.wgsl';
-import vertexPositionColorWGSL from '!!raw-loader!./player.frag.wgsl';
-import {mat4, vec3} from "gl-matrix";
-
-export class Player {
-  private pipeline: GPURenderPipeline;
-  private uniformBindGroup: GPUBindGroup;
-  private verticesBuffer: GPUBuffer;
-
+export default class Player {
   public position: vec3;
+  private vertexBuffer: GPUBuffer;
   private uniformBuffer: GPUBuffer;
+  private uniformBindGroup: GPUBindGroup;
+  private pipeline: GPURenderPipeline;
 
-  constructor() {
-    this.position = vec3.fromValues(2000000,0,0);
+  constructor(position: vec3) {
+    this.position = position;
   }
 
-  async init(device: GPUDevice) {
-    this.verticesBuffer = device.createBuffer({
-      size: cubeVertexArray.byteLength,
-      usage: GPUBufferUsage.VERTEX,
-      mappedAtCreation: true,
-    });
-    new Float32Array(this.verticesBuffer.getMappedRange()).set(cubeVertexArray);
-    this.verticesBuffer.unmap();
-
+  init(device: GPUDevice) {
     this.pipeline = device.createRenderPipeline({
       layout: 'auto',
       vertex: {
         module: device.createShaderModule({
-          code: basicVertWGSL,
+          code: vertex,
         }),
         entryPoint: 'main',
         buffers: [
@@ -60,7 +44,7 @@ export class Player {
       },
       fragment: {
         module: device.createShaderModule({
-          code: vertexPositionColorWGSL,
+          code: fragment,
         }),
         entryPoint: 'main',
         targets: [
@@ -71,8 +55,15 @@ export class Player {
       },
       primitive: {
         topology: 'triangle-list',
+
+        // Backface culling since the cube is solid piece of geometry.
+        // Faces pointing away from the camera will be occluded by faces
+        // pointing toward the camera.
         cullMode: 'back',
       },
+
+      // Enable depth testing so that the fragment closest to the camera
+      // is rendered in front.
       depthStencil: {
         depthWriteEnabled: true,
         depthCompare: 'less',
@@ -80,7 +71,15 @@ export class Player {
       },
     });
 
-    const uniformBufferSize = 4 * 16; // 4x4 matrix
+    this.vertexBuffer = device.createBuffer({
+      size: cubeVertexArray.byteLength,
+      usage: GPUBufferUsage.VERTEX,
+      mappedAtCreation: true,
+    });
+    new Float32Array(this.vertexBuffer.getMappedRange()).set(cubeVertexArray);
+    this.vertexBuffer.unmap();
+
+    const uniformBufferSize = 4 * 16;
     this.uniformBuffer = device.createBuffer({
       size: uniformBufferSize,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
@@ -94,7 +93,7 @@ export class Player {
           resource: {
             buffer: this.uniformBuffer,
           },
-        },
+        }
       ],
     });
 
@@ -103,6 +102,7 @@ export class Player {
   getTransformationMatrix(projectionMatrix) {
     const modelMatrix = mat4.create()
     mat4.translate(modelMatrix, modelMatrix, this.position);
+    mat4.scale(modelMatrix, modelMatrix, vec3.fromValues(100.0, 100.0, 100.0));
 
     const modelViewProjectionMatrix = mat4.create();
     mat4.multiply(modelViewProjectionMatrix, projectionMatrix, modelMatrix);
@@ -110,7 +110,7 @@ export class Player {
     return modelViewProjectionMatrix;
   }
 
-  update(device: GPUDevice, projectionMatrix) {
+  update(device: GPUDevice, projectionMatrix: mat4, timestamp: number) {
     const transformationMatrix = this.getTransformationMatrix(projectionMatrix);
 
     device.queue.writeBuffer(
@@ -125,7 +125,7 @@ export class Player {
   draw(passEncoder: GPURenderPassEncoder) {
     passEncoder.setPipeline(this.pipeline);
     passEncoder.setBindGroup(0, this.uniformBindGroup);
-    passEncoder.setVertexBuffer(0, this.verticesBuffer);
+    passEncoder.setVertexBuffer(0, this.vertexBuffer);
     passEncoder.draw(cubeVertexCount, 1, 0, 0);
   }
 }

@@ -8,7 +8,7 @@ import Mouse from "./mouse";
 import {QueueItem} from "./queueItem";
 import Raycast from "./raycast";
 import Network from "./network";
-import {Player} from "./player";
+import Player from "./player";
 
 declare global {
   interface Window { generate: any; }
@@ -28,18 +28,25 @@ class Game {
   private lastUpdate: number;
   private network: Network;
   private player: Player;
+  private players: Map<string, Player>;
 
 
   async init(device: GPUDevice) {
     this.loaded = false;
     this.lastUpdate = 0;
 
-    this.network = await Network.init();
+    this.players = new Map<string, Player>();
+    this.network = await Network.init(this.players, id => {
+      var player = new Player(vec3.fromValues(2000000.0, 100.0, 100.0));
+      player.init(device);
+      this.players[id] = player;
+      return player;
+    });
 
     await this.network.sendData({type: 'move', position: {x: 0, y: 0, z: 0}});
 
-    this.player = new Player();
-    await this.player.init(device);
+    //this.player = new Player(vec3.fromValues(2000000.0, 100.0, 100.0));
+    //this.player.init(device);
 
     this.keyboard = new Keyboard();
     this.keyboard.init();
@@ -147,17 +154,23 @@ class Game {
     this.controller.position = this.physics.position as vec3;
     this.controller.update(device, projectionMatrix, timestamp, queue, this.raycast);
 
+
     const viewMatrix = this.controller.viewMatrix;
 
-    this.player.update(device, projectionMatrix);
-
     this.collection.update(device, viewMatrix, timestamp);
+
+    for(let id in this.players) {
+      this.players[id].update(device, viewMatrix, timestamp);
+    }
+
     this.keyboard.update();
     this.mouse.update();
   }
 
   draw(passEncoder: GPURenderPassEncoder) {
-    this.player.draw(passEncoder);
+    for(let id in this.players) {
+      this.players[id].draw(passEncoder);
+    }
     this.collection.draw(passEncoder);
   }
 }
