@@ -29,6 +29,7 @@
     "reconnecting-websocket": "^4.4.0",
     "seedrandom": "^3.0.5",
     "stats.js": "^0.17.0",
+    "steamworks.js": "^0.0.26",
     "tone": "^14.7.77",
     "web3": "^1.8.1"
   }

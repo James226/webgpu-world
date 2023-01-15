@@ -2,7 +2,6 @@ import Stats from 'stats.js'
 import Renderer from "./renderer";
 import Game from "./game";
 import {mat4} from "gl-matrix";
-import Web3 from "web3";
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement;
 
@@ -20,6 +19,37 @@ const configureRenderer = () => {
 
   renderer.configure(canvas.width, canvas.height);
 }
+
+// You can pass an appId, or don't pass anything and use a steam_appid.txt file
+const steamworks: typeof import('steamworks.js') = eval('typeof require === "function" && require(\'steamworks.js\')');
+
+if (steamworks) {
+  const client = steamworks.init(480)
+
+// Print Steam username
+  console.log(client.localplayer.getName())
+
+// Tries to activate an achievement
+  if (!client.achievement.activate('ACH_WIN_ONE_GAME')) {
+    console.log('Sad fish')
+  }
+
+  client.auth.getSessionTicket().then(ticket =>
+  {
+    const buffer = ticket.getBytes();
+    console.log('ticket', buffer);
+  });
+
+  client.matchmaking.getLobbies().then(async lobbies => {
+    console.log('Lobbies', lobbies)
+    const lobby = await lobbies[0].join();
+    console.log(lobby.getMembers());
+
+
+    lobby.leave();
+  });
+}
+
 
 renderer.init(canvas).then(async () => {
 
